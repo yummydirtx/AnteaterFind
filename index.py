@@ -55,6 +55,13 @@ class InvertedIndex:
         return token_doc_counts
     
     def calculate_tf_idfs(self) -> dict:
-        pass
-
-
+        """
+        Calculates the TF-IDF of all tokens in all documents.
+        """
+        document_tokens = self.tokenize_documents()
+        idfs = self.calculate_idfs(document_tokens)
+        res = {}
+        for doc_name, doc_tokens in document_tokens.items():
+            tfs = self.calculate_tfs(doc_tokens)
+            res[doc_name] = {token: tfs[token] * idfs[token] for token in doc_tokens}
+        return res
