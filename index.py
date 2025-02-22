@@ -8,10 +8,13 @@ from collections import Counter
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 class InvertedIndex:
-    def __init__(self, zipPath: str):
+    def __init__(self, zipPath: str=None):
+        if zipPath is not None:
+            self.load_zip(zipPath)
+
+    def load_zip(self, zipPath: str):
         file_opener = FileOpener(zipPath)
         self.documents = file_opener.read_zip()
-        self.stemmer = PorterStemmer() #should prob include in tokenizer
         #create dict to map {token: list of postings} - posting might be {doc:tf-idf?}
         self.dict = self.calculate_tf_idfs()
 
@@ -21,6 +24,7 @@ class InvertedIndex:
         the frequency of each stemmed word.
         """
         # Parse HTML and extract text
+        stemmer = PorterStemmer()
         soup = BeautifulSoup(text, 'html.parser')
         text = soup.get_text()
 
@@ -28,7 +32,7 @@ class InvertedIndex:
         raw_tokens = re.findall(r'[A-Za-z0-9]+', text)
 
         # Convert all tokens to lowercase and stem them
-        tokens = [self.stemmer.stem(token.lower()) for token in raw_tokens]
+        tokens = [stemmer.stem(token.lower()) for token in raw_tokens]
 
         return dict(Counter(tokens))
     
