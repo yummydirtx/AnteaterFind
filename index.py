@@ -5,7 +5,9 @@ import re
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 class InvertedIndex:
-    def __init__(self):
+    def __init__(self, zipPath: str):
+        file_opener = FileOpener(zipPath)
+        self.documents = file_opener.read_zip()
         self.dict = {}
         #create dict to map {token: posting} - posting might be {doc:tf-idf?}
 
