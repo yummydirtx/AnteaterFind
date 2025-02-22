@@ -18,12 +18,11 @@ class InvertedIndex:
         tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
         return {token: tokens.count(token) for token in tokens}
     
-    def calculate_tf(self, token: str, tokens: dict) -> float:
+    def calculate_tfs(self, tokens: dict) -> dict:
         """
-        Calculates the term frequency of a token in a document.
+        Calculates the term frequency of all tokens in a document.
         TF = number of times the token appears in the document / total number
         of tokens in the document.
         """
-        # Using or 1 to avoid division by zero
-        return tokens[token] / (sum(tokens.values() or 1))
-
+        total_tokens = sum(tokens.values())
+        return {token: count / total_tokens for token, count in tokens.items()}
