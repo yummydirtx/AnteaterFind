@@ -16,7 +16,7 @@ class FileOpener:
 
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             for file_name in zipfolder.namelist():
-                if file_name.startswith("DEV/") and file_name.endswith(".json"):
+                if file_name.endswith(".json"):
                     try:
                         with zipfolder.open(file_name) as file:
                             json_data = json.load(file)
