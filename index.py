@@ -16,7 +16,7 @@ class InvertedIndex:
         file_opener = FileOpener(zipPath)
         self.documents = file_opener.read_zip()
         #create dict to map {token: list of postings} - posting might be {doc:tf-idf?}
-        self.dict = self.calculate_tf_idfs()
+        self.postings = self.calculate_tf_idfs()
 
     def tokenize(self, text: str) -> dict:
         """
@@ -68,7 +68,7 @@ class InvertedIndex:
             docs_with_token = sum(1 for doc_tokens in document_tokens.values() 
                     if token in doc_tokens)
             # Calculate the IDF
-            token_doc_counts[token] = math.log(total_docs / (docs_with_token+1)) # avoid log 0
+            token_doc_counts[token] = math.log(total_docs / docs_with_token, 10) if docs_with_token > 0 else 0.0
         
         return token_doc_counts
     
