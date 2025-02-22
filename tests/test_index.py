@@ -19,6 +19,14 @@ class TestIndex(unittest.TestCase):
 
     def test_calculate_idfs(self):
         index = InvertedIndex()
-        index.documents = {"doc1": "<html><body><p>This is a test.</p></body></html>", "doc2": "<html><body><p>This is only a test.</p></body></html>"}
+        index.documents = {"doc1.test": "<html><body><p>This is a test.</p></body></html>", "doc2.test": "<html><body><p>This is only a test.</p></body></html>"}
         document_tokens = index.tokenize_documents()
         self.assertEqual(index.calculate_idfs(document_tokens), {"thi": 0.0, "is": 0.0, "a": 0.0, "test": 0.0, "onli": 0.30102999566398114})
+
+    def test_calculate_tf_idfs(self):
+        index = InvertedIndex('zips/dummy.zip')
+        self.assertEqual(index.calculate_tf_idfs(), {"doc1.test": {"thi": 0.0, "is": 0.0, "a": 0.0, "test": 0.0}, "doc2.test": {"thi": 0.0, "is": 0.0, "a": 0.0, "test": 0.0, "onli": 0.06020599913279623}})
+    
+    def test_load_zip(self):
+        index = InvertedIndex('zips/dummy.zip')
+        self.assertEqual(index.documents, {"doc1.test": "<html><body><p>This is a test.</p></body></html>", "doc2.test": "<html><body><p>This is only a test.</p></body></html>"})
