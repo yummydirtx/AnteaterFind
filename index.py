@@ -17,8 +17,13 @@ class InvertedIndex:
         """
         Tokenizes text into alphanumeric words and returns the frequency of each word.
         """
-        tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
-        return {token: tokens.count(token) for token in tokens}
+        # Find all alphanumeric sequences
+        raw_tokens = re.findall(r'[A-Za-z0-9]+', text)
+
+        # Convert all tokens to lowercase
+        tokens = [token.lower() for token in raw_tokens]
+
+        return tokens
     
     def tokenize_documents(self) -> dict:
         """
