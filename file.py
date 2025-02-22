@@ -7,26 +7,23 @@ class FileOpener:
         self.zipPath = zipPath
 
     def read_zip(self) -> dict:
-        """Read files from the ZIP without extracting them"""
-        # Check if the file is a valid ZIP file
+        """Read files from the ZIP and return a dict mapping urls to content"""
         if not zipfile.is_zipfile(self.zipPath):
             raise zipfile.BadZipFile("The file is not a valid ZIP.")
 
-        # Dictionary to store JSON data, where the key is the file name
-        documents = {}
+        # Dictionary to store url -> content mapping
+        url_to_content = {}
 
-        # Open the ZIP file
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             for file_name in zipfolder.namelist():
-                #everything in the folder should start with dev and inside of it is json
                 if file_name.startswith("DEV/") and file_name.endswith(".json"):
                     try:
                         with zipfolder.open(file_name) as file:
-                            # Load the entire JSON file assuming all are json
-                            #may need to read line by line
-                            json_data = json.load(file)  #  the whole file
-                            documents[file_name] = json_data  # Store it in the dictionary
+                            json_data = json.load(file)
+                            # Only add entries that have both url and content
+                            if 'url' in json_data and 'content' in json_data:
+                                url_to_content[json_data['url']] = json_data['content']
                     except json.JSONDecodeError:
                         print(f"invalid JSON file: {file_name}")
-    #json data
-            return documents
+
+        return url_to_content
