@@ -2,17 +2,18 @@ import zipfile
 import json
 
 class FileOpener:
-    def __init__(self, zipPath):
+    def __init__(self, zipPath: str):
         """intialize zip"""
         self.zipPath = zipPath
 
-    def read_zip(self):
+    def read_zip(self) -> dict:
         """Read files from the ZIP without extracting them"""
         # Check if the file is a valid ZIP file
         if not zipfile.is_zipfile(self.zipPath):
             raise zipfile.BadZipFile("The file is not a valid ZIP.")
 
-        documents = {}  # Dictionary to store JSON data
+        # Dictionary to store JSON data, where the key is the file name
+        documents = {}
 
         # Open the ZIP file
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
