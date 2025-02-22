@@ -1,6 +1,7 @@
 from file import FileOpener
 import math
 import re
+from nltk.stem import PorterStemmer
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
@@ -8,6 +9,7 @@ class InvertedIndex:
     def __init__(self, zipPath: str):
         file_opener = FileOpener(zipPath)
         self.documents = file_opener.read_zip()
+        self.stemmer = PorterStemmer() #should prob include in tokenizer
         #create dict to map {token: list of postings} - posting might be {doc:tf-idf?}
         self.dict = self.calculate_tf_idfs()
 
@@ -50,7 +52,7 @@ class InvertedIndex:
             docs_with_token = sum(1 for doc_tokens in document_tokens.values() 
                     if token in doc_tokens)
             # Calculate the IDF
-            token_doc_counts[token] = math.log(total_docs / docs_with_token)
+            token_doc_counts[token] = math.log(total_docs / (docs_with_token+1)) # avoid log 0
         
         return token_doc_counts
     
