@@ -18,6 +18,15 @@ class InvertedIndex:
         tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
         return {token: tokens.count(token) for token in tokens}
     
+    def tokenize_documents(self) -> dict:
+        """
+        Tokenizes all documents in the ZIP file.
+        """
+        res = {}
+        for doc_name, doc_text in self.documents.items():
+            res[doc_name] = self.tokenize(doc_text)
+        return res
+    
     def calculate_tfs(self, tokens: dict) -> dict:
         """
         Calculates the term frequency of all tokens in a document.
