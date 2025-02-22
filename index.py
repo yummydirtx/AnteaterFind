@@ -1,7 +1,9 @@
 from file import FileOpener
+from bs4 import BeautifulSoup
 import math
 import re
 from nltk.stem import PorterStemmer
+from collections import Counter
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
@@ -15,15 +17,20 @@ class InvertedIndex:
 
     def tokenize(self, text: str) -> dict:
         """
-        Tokenizes text into alphanumeric words and returns the frequency of each word.
+        Tokenizes HTML text into alphanumeric words using BeautifulSoup and returns 
+        the frequency of each stemmed word.
         """
+        # Parse HTML and extract text
+        soup = BeautifulSoup(text, 'html.parser')
+        text = soup.get_text()
+
         # Find all alphanumeric sequences
         raw_tokens = re.findall(r'[A-Za-z0-9]+', text)
 
-        # Convert all tokens to lowercase
-        tokens = [token.lower() for token in raw_tokens]
+        # Convert all tokens to lowercase and stem them
+        tokens = [self.stemmer.stem(token.lower()) for token in raw_tokens]
 
-        return tokens
+        return dict(Counter(tokens))
     
     def tokenize_documents(self) -> dict:
         """
