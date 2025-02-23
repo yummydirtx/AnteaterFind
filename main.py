@@ -1,5 +1,7 @@
 #from file import FileOpener
 from index import InvertedIndex
+import os
+
 def generate_m1_report():
     index = InvertedIndex(r"zips/dummy.zip") #test
     numDocuments = len(index.documents) #can call directly from invertedindex bc its calling from file.py
@@ -9,7 +11,8 @@ def generate_m1_report():
     with open("M1Report.txt", 'w') as f:
         f.write(f"The number of indexed documents: {numDocuments}\n")
         f.write(f"The number of unique words: {numUniqueTokens}\n")
-        f.write(f"The total size (in KB) of index on disk:")
+        index_size = os.path.getsize("index.json") / 1024  # Convert bytes to KB
+        f.write(f"The total size (in KB) of index on disk: {index_size:.2f}\n")
 
 if __name__ == "__main__":
     generate_m1_report()
