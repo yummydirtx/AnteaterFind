@@ -12,6 +12,7 @@ from posting import Posting
 class InvertedIndex:
     def __init__(self, zipPath: str=None):
         self.index = {}
+        self.total_documents = 0
         if zipPath is not None:
             self.load_zip(zipPath)
 
@@ -60,6 +61,7 @@ class InvertedIndex:
         """
         res = {}
         for doc_name, doc_text in self.documents.items():
+            self.total_documents += 1
             res[doc_name] = self.tokenize(doc_text)
         return res
     
