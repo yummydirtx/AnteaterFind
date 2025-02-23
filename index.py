@@ -84,3 +84,12 @@ class InvertedIndex:
             tfs = self.calculate_tfs(doc_tokens)
             res[doc_name] = {token: tfs[token] * idfs[token] for token in doc_tokens}
         return res
+
+    def get_unique_tokens(self):
+        """Get set of unique tokens"""
+        document_tokens = self.tokenize_documents()
+        unique_tokens = set()
+        for token in document_tokens.values():
+            unique_tokens.update(token.keys())
+
+        return unique_tokens
