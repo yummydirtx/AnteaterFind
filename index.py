@@ -18,7 +18,7 @@ class InvertedIndex:
         with open('index.json', 'w') as f:
             f.write('')
         while True:
-            self.documents = file_opener.read_zip(500)
+            self.documents = file_opener.read_zip(1000)
             if len(self.documents) == 0:
                 break
             batch_tokens = self.tokenize_documents()
