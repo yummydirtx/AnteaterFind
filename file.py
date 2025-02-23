@@ -39,3 +39,22 @@ class FileOpener:
                         print(f"invalid JSON file: {file_name}")
 
         return url_to_content
+
+    def write_batch_to_index(self, batch_data: dict):
+        """
+        Writes a batch of data to index.json
+        param batch_data: Dictionary containing the batch data to write
+        """
+        with open('index.json', 'a+') as f:
+            f.seek(0)  # Go to start of file
+            is_empty = f.read(1) == ''  # Check if file is empty
+            
+            if is_empty:  # If file is empty, start with [
+                f.write('[')
+            elif f.tell() > 1:  # If file has content, remove ] and add comma
+                f.seek(f.tell() - 2)  # Move before the last ']'
+                f.write(',')
+            
+            json_str = json.dumps(batch_data)
+            f.write(json_str)
+            f.write(']')

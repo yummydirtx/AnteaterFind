@@ -1,6 +1,6 @@
 from file import FileOpener
 from bs4 import BeautifulSoup
-import math
+import json
 import re
 from nltk.stem import PorterStemmer
 from collections import Counter
@@ -14,10 +14,19 @@ class InvertedIndex:
 
     def load_zip(self, zipPath: str):
         file_opener = FileOpener(zipPath)
-        self.documents = file_opener.read_zip()
-        #create dict to map {token: list of postings} - posting might be {doc:tf-idf?}
-        # TODO: Replace this with a list of Posting objects
-        self.postings = self.calculate_tf_idfs()
+        # Erase index.json
+        with open('index.json', 'w') as f:
+            f.write('')
+        while True:
+            self.documents = file_opener.read_zip(500)
+            if len(self.documents) == 0:
+                break
+            batch_tokens = self.tokenize_documents()
+            batch_tfs = {}
+            for doc_name in batch_tokens:
+                batch_tfs[doc_name] = self.calculate_tfs(batch_tokens[doc_name])
+            # Write batch to index.json
+            file_opener.write_batch_to_index(batch_tfs)
 
     def tokenize(self, text: str) -> dict:
         """
@@ -26,7 +35,7 @@ class InvertedIndex:
         """
         # Parse HTML and extract text
         stemmer = PorterStemmer()
-        soup = BeautifulSoup(text, 'html.parser')
+        soup = BeautifulSoup(text, features='xml')
         text = soup.get_text()
 
         # Find all alphanumeric sequences
@@ -54,36 +63,6 @@ class InvertedIndex:
         """
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
-    
-    def calculate_idfs(self, document_tokens: dict) -> dict:
-        """
-        Calculates the inverse document frequency of all tokens.
-        IDF = log(total number of documents / number of documents containing the token)
-        document_tokens = {doc_name: {token: count}}
-        """ 
-        total_docs = len(self.documents)
-        token_doc_counts = {}
-        # Count documents containing each token
-        for token in set().union(*document_tokens.values()):
-            # Count the number of documents containing the token
-            docs_with_token = sum(1 for doc_tokens in document_tokens.values() 
-                    if token in doc_tokens)
-            # Calculate the IDF
-            token_doc_counts[token] = math.log(total_docs / docs_with_token, 10) if docs_with_token > 0 else 0.0
-        
-        return token_doc_counts
-    
-    def calculate_tf_idfs(self) -> dict:
-        """
-        Calculates the TF-IDF of all tokens in all documents.
-        """
-        document_tokens = self.tokenize_documents()
-        idfs = self.calculate_idfs(document_tokens)
-        res = {}
-        for doc_name, doc_tokens in document_tokens.items():
-            tfs = self.calculate_tfs(doc_tokens)
-            res[doc_name] = {token: tfs[token] * idfs[token] for token in doc_tokens}
-        return res
 
     def get_unique_tokens(self):
         """Get set of unique tokens"""
