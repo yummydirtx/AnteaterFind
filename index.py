@@ -1,5 +1,6 @@
 from file import FileOpener
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+import warnings
 import json
 import re
 from nltk.stem import PorterStemmer
@@ -42,6 +43,7 @@ class InvertedIndex:
         # Parse HTML and extract text
         stemmer = PorterStemmer()
         soup = BeautifulSoup(text, features='xml')
+        warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
         text = soup.get_text()
 
         # Find all alphanumeric sequences
