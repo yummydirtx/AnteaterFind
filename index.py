@@ -4,11 +4,13 @@ import json
 import re
 from nltk.stem import PorterStemmer
 from collections import Counter
+from posting import Posting
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 class InvertedIndex:
     def __init__(self, zipPath: str=None):
+        self.index = {}
         if zipPath is not None:
             self.load_zip(zipPath)
 
@@ -26,7 +28,8 @@ class InvertedIndex:
                 batch_tfs = {}
                 for doc_name in batch_tokens:
                     batch_tfs[doc_name] = self.calculate_tfs(batch_tokens[doc_name])
-                # Write batch to index.json
+                self.update_index(batch_tfs)
+            # Write batch to index.json
                 file_opener.write_batch_to_index(batch_tfs)
         finally:
             file_opener.close()
@@ -66,6 +69,13 @@ class InvertedIndex:
         """
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
+
+    def update_index(self, batch_tfs: dict):
+        for doc_name, tokens in batch_tfs.items():
+            for token, tf in tokens.items():
+                if token not in self.index:
+                    self.index[token] = []
+                self.index[token].append(Posting(doc_name, tf, 0))
 
     def get_unique_tokens(self):
         """Get set of unique tokens"""
