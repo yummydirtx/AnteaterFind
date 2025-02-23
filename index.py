@@ -77,15 +77,8 @@ class InvertedIndex:
     def update_index(self, batch_tfs: dict):
         for doc_name, tokens in batch_tfs.items():
             for token, tf in tokens.items():
-                if token not in self.index:
-                    self.index[token] = []
                 self.index[token].append(Posting(doc_name, tf, 0))
 
     def get_unique_tokens(self):
         """Get set of unique tokens"""
-        document_tokens = self.tokenize_documents()
-        unique_tokens = set()
-        for token in document_tokens.values():
-            unique_tokens.update(token.keys())
-
-        return unique_tokens
+        return set(self.index.keys())
