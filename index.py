@@ -4,15 +4,16 @@ import warnings
 import json
 import re
 from nltk.stem import PorterStemmer
-from collections import Counter
+from collections import Counter, defaultdict
 from posting import Posting
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 class InvertedIndex:
     def __init__(self, zipPath: str=None):
-        self.index = {}
+        self.index = defaultdict(list) #should be faster
         self.total_documents = 0
+        self.stemmer = PorterStemmer()
         if zipPath is not None:
             self.load_zip(zipPath)
 
@@ -42,7 +43,6 @@ class InvertedIndex:
         the frequency of each stemmed word.
         """
         # Parse HTML and extract text
-        stemmer = PorterStemmer()
         soup = BeautifulSoup(text, features='xml')
         warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
         text = soup.get_text()
@@ -51,7 +51,7 @@ class InvertedIndex:
         raw_tokens = re.findall(r'[A-Za-z0-9]+', text)
 
         # Convert all tokens to lowercase and stem them
-        tokens = [stemmer.stem(token.lower()) for token in raw_tokens]
+        tokens = [self.stemmer.stem(token.lower()) for token in raw_tokens]
 
         return dict(Counter(tokens))
     
