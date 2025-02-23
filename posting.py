@@ -7,5 +7,5 @@ class Posting:
         self.tf_idf = tf * idf
 
     def __str__(self) -> str:
-        "format for postings"
+        """format for postings"""
         return f"({self.doc_name}, {self.tf_idf})"
