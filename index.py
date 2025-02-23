@@ -17,16 +17,19 @@ class InvertedIndex:
         # Erase index.json
         with open('index.json', 'w') as f:
             f.write('')
-        while True:
-            self.documents = file_opener.read_zip(1000)
-            if len(self.documents) == 0:
-                break
-            batch_tokens = self.tokenize_documents()
-            batch_tfs = {}
-            for doc_name in batch_tokens:
-                batch_tfs[doc_name] = self.calculate_tfs(batch_tokens[doc_name])
-            # Write batch to index.json
-            file_opener.write_batch_to_index(batch_tfs)
+        try:
+            while True:
+                self.documents = file_opener.read_zip(1000)
+                if len(self.documents) == 0:
+                    break
+                batch_tokens = self.tokenize_documents()
+                batch_tfs = {}
+                for doc_name in batch_tokens:
+                    batch_tfs[doc_name] = self.calculate_tfs(batch_tokens[doc_name])
+                # Write batch to index.json
+                file_opener.write_batch_to_index(batch_tfs)
+        finally:
+            file_opener.close()
 
     def tokenize(self, text: str) -> dict:
         """

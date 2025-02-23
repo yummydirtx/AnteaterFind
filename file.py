@@ -1,11 +1,17 @@
 import zipfile
 import json
+from tqdm import tqdm
 
 class FileOpener:
     def __init__(self, zipPath: str):
         """intialize zip"""
         self.zipPath = zipPath
         self.seenUrls = set()
+        
+        # Initialize progress tracking
+        with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
+            self.total_files = len([f for f in zipfolder.namelist() if f.endswith('.json')])
+            self.pbar = tqdm(total=self.total_files, desc="Processing files")
 
     def read_zip(self, count: int = None) -> dict:
         """
@@ -21,7 +27,10 @@ class FileOpener:
         files_processed = 0
 
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
-            for file_name in zipfolder.namelist():
+            # Get list of JSON files
+            json_files = [f for f in zipfolder.namelist() if f.endswith('.json')]
+            
+            for file_name in json_files:
                 if count is not None and files_processed >= count:
                     break
                     
@@ -35,10 +44,15 @@ class FileOpener:
                                     self.seenUrls.add(json_data['url'])
                                     url_to_content[json_data['url']] = json_data['content']
                                     files_processed += 1
+                                    self.pbar.update(1)
                     except json.JSONDecodeError:
                         print(f"invalid JSON file: {file_name}")
 
         return url_to_content
+
+    def close(self):
+        """Close the progress bar when done processing all files"""
+        self.pbar.close()
 
     def write_batch_to_index(self, batch_data: dict):
         """

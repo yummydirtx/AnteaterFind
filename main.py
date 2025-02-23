@@ -3,8 +3,8 @@ from index import InvertedIndex
 import os
 
 def generate_m1_report():
-    index = InvertedIndex(r"zips/dummy.zip") #test
-    numDocuments = len(index.documents) #can call directly from invertedindex bc its calling from file.py
+    index = InvertedIndex(r"zips/developer.zip") #test
+    numDocuments = index.total_documents
     uniqueTokens = index.get_unique_tokens()
     numUniqueTokens = len(uniqueTokens)
 
