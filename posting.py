@@ -8,4 +8,4 @@ class Posting:
 
     def __str__(self) -> str:
         """format for postings"""
-        return f"({self.doc_name}, {self.tf_idf})"
+        return f"({self.doc_name}, {self.tf_idf:.2f})"

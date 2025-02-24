@@ -24,13 +24,14 @@ class InvertedIndex:
             f.write('')
         try:
             while True:
-                self.documents = file_opener.read_zip(1000)
-                if len(self.documents) == 0:
+                documents = file_opener.read_zip(1000)
+                if not documents:
                     break
-                batch_tokens = self.tokenize_documents()
                 batch_tfs = {}
-                for doc_name in batch_tokens:
-                    batch_tfs[doc_name] = self.calculate_tfs(batch_tokens[doc_name])
+                for doc_name, doc_text in documents.items():
+                    self.total_documents += 1
+                    tokens = self.tokenize(doc_text)
+                    batch_tfs[doc_name] = self.calculate_tfs(tokens)
                 self.update_index(batch_tfs)
             # Write batch to index.json
                 file_opener.write_batch_to_index(batch_tfs)
@@ -43,7 +44,7 @@ class InvertedIndex:
         the frequency of each stemmed word.
         """
         # Parse HTML and extract text
-        soup = BeautifulSoup(text, features='xml')
+        soup = BeautifulSoup(text,"html.parser")
         warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
         text = soup.get_text()
 
