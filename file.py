@@ -53,4 +53,3 @@ class FileOpener:
     def close(self):
         """Close the progress bar when done processing all files"""
         self.pbar.close()
-

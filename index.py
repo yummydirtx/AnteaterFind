@@ -13,7 +13,15 @@ import os
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 class InvertedIndex:
+    """
+    Creates and manages an inverted index from a collection of documents.
+    Implements disk-based indexing for memory efficiency.
+    """
     def __init__(self, zipPath: str = None):
+        """
+        Initialize the inverted index. If zipPath is provided, immediately
+        processes the documents in that path.
+        """
         self.total_documents = 0
         self.stemmer = PorterStemmer()
         self.partial_index_count = 0
@@ -23,6 +31,10 @@ class InvertedIndex:
             self.merge_partial_indexes()
 
     def load_zip(self, zipPath: str):
+        """
+        Processes documents from a ZIP file in batches to manage memory usage.
+        Creates partial indexes for each batch.
+        """
         file_opener = FileOpener(zipPath)
         try:
             while True:
@@ -35,7 +47,10 @@ class InvertedIndex:
             file_opener.close()
 
     def save_partial_index(self, batch_tfs: dict):
-        """Save a partial index to disk as a sorted, line-delimited file."""
+        """
+        Saves a batch of documents as a partial index to disk.
+        Each partial index is sorted and contains one token entry per line.
+        """
         partial_index = defaultdict(list)
         for doc_name, tokens in batch_tfs.items():
             for token, tf in tokens.items():
@@ -121,7 +136,7 @@ class InvertedIndex:
         the frequency of each stemmed word.
         """
         # Parse HTML and extract text
-        soup = BeautifulSoup(text, features='xml')
+        soup = BeautifulSoup(text, features='lxml')
         warnings.filterwarnings("ignore", category = MarkupResemblesLocatorWarning)
         text = soup.get_text()
 

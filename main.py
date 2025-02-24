@@ -4,6 +4,16 @@ import os
 import sys
 
 def generate_m1_report(path: str):
+    """
+    Generates a report containing index statistics.
+    Args:
+        path: Path to the document collection
+    Creates:
+        M1Report.txt containing:
+        - Number of indexed documents
+        - Number of unique words
+        - Total size of index on disk
+    """
     index = InvertedIndex(path) #test
     numDocuments = index.total_documents
     numUniqueTokens = index.get_unique_tokens()
