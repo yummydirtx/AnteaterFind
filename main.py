@@ -1,9 +1,10 @@
 #from file import FileOpener
 from index import InvertedIndex
 import os
+import sys
 
-def generate_m1_report():
-    index = InvertedIndex(r"zips/developer.zip") #test
+def generate_m1_report(path: str):
+    index = InvertedIndex(path) #test
     numDocuments = index.total_documents
     numUniqueTokens = index.get_unique_tokens()
 
@@ -14,4 +15,7 @@ def generate_m1_report():
         f.write(f"The total size (in KB) of index on disk: {index_size:.2f}\n")
 
 if __name__ == "__main__":
-    generate_m1_report()
+    if len(sys.argv) != 2:
+        print("Usage: python main.py <path_to_documents>")
+        sys.exit(1)
+    generate_m1_report(sys.argv[1])
