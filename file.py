@@ -56,14 +56,14 @@ class FileOpener:
                 if file_name.endswith(".json"):
                     try:
                         with zipfolder.open(file_name) as file:
-                            json_data = json.load(file)
-                            # Only add entries that have both url and content
-                            if 'url' in json_data and 'content' in json_data:
-                                if json_data['url'] not in self.seenUrls:
-                                    self.seenUrls.add(json_data['url'])
-                                    url_to_content[json_data['url']] = json_data['content']
-                                    files_processed += 1
-                                    self.pbar.update(1)
+                            for line in file:
+                                json_data = json.loads(line.decode('utf-8'))                            # Only add entries that have both url and content
+                                if 'url' in json_data and 'content' in json_data:
+                                    if json_data['url'] not in self.seenUrls:
+                                        self.seenUrls.add(json_data['url'])
+                                        url_to_content[json_data['url']] = json_data['content']
+                                        files_processed += 1
+                                        self.pbar.update(1)
                     except json.JSONDecodeError:
                         print(f"invalid JSON file: {file_name}")
 
@@ -99,20 +99,17 @@ class FileOpener:
         
         file_iters = []
         for fname in files:
-            fp = open(fname, 'r')
-            line = fp.readline()
-            if line:
-                data = json.loads(line)
-                file_iters.append((data["token"], data["postings"], fp))
-            else:
-                fp.close()
-        
+            with open(fname, 'r') as fp:
+                line = fp.readline()
+                if line:
+                    data = json.loads(line)
+                    file_iters.append((data["token"], data["postings"], fp))
+
         counter = 0
         heap = []
         for token, postings, fp in file_iters:
-            heap.append((token, counter, postings, fp))
+            heapq.heappush(heap, (token, counter, postings, fp))
             counter += 1
-        heapq.heapify(heap)
 
         with open('index.json', 'w') as outfile:
             outfile.write('{')
@@ -141,9 +138,7 @@ class FileOpener:
                     data = json.loads(next_line)
                     heapq.heappush(heap, (data["token"], counter, data["postings"], fp))
                     counter += 1
-                else:
-                    fp.close()
-            
+
             if current_token is not None:
                 if not first_token:
                     outfile.write(',')
