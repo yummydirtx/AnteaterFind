@@ -5,8 +5,7 @@ import os
 def generate_m1_report():
     index = InvertedIndex(r"zips/developer.zip") #test
     numDocuments = index.total_documents
-    uniqueTokens = index.get_unique_tokens()
-    numUniqueTokens = len(uniqueTokens)
+    numUniqueTokens = index.get_unique_tokens()
 
     with open("M1Report.txt", 'w') as f:
         f.write(f"The number of indexed documents: {numDocuments}\n")
