@@ -17,6 +17,7 @@ class InvertedIndex:
         self.total_documents = 0
         self.stemmer = PorterStemmer()
         self.partial_index_count = 0
+        self.unique_tokens = set()
         if zipPath is not None:
             self.load_zip(zipPath)
             self.merge_partial_indexes()
@@ -136,6 +137,9 @@ class InvertedIndex:
         # Convert all tokens to lowercase and stem them
         tokens = [self.stemmer.stem(token.lower()) for token in raw_tokens]
 
+        # Add tokens to set of unique tokens
+        self.unique_tokens.update(tokens)
+
         return dict(Counter(tokens))
 
     def tokenize_documents(self) -> dict:
@@ -163,24 +167,5 @@ class InvertedIndex:
                 self.index[token].append(Posting(doc_name, tf, 0))
 
     def get_unique_tokens(self):
-        """Get set of unique tokens"""
-        tokens = set()
-        with open('index.json', 'r') as f:
-            # Read file in chunks to avoid loading entire file
-            chunk_size = 1024 * 1024  # 1MB chunks
-            chunk = f.read(chunk_size)
-            current_token = ''
-            in_string = False
-            
-            while chunk:
-                for char in chunk:
-                    if char == '"' and (len(current_token) == 0 or current_token[-1] != '\\'):
-                        in_string = not in_string
-                        if not in_string and current_token:
-                            tokens.add(current_token)
-                            current_token = ''
-                    elif in_string:
-                        current_token += char
-                chunk = f.read(chunk_size)
-                
-        return tokens
+        """Get number of unique tokens"""
+        return len(self.unique_tokens)
