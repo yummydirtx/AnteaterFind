@@ -26,14 +26,10 @@ class InvertedIndex:
         file_opener = FileOpener(zipPath)
         try:
             while True:
-                documents = file_opener.read_zip(15000)
-                if not documents:
+                self.documents = file_opener.read_zip(15000)
+                if not self.documents:
                     break
-                batch_tfs = {}
-                for doc_name, doc_text in documents.items():
-                    self.total_documents += 1
-                    tokens = self.tokenize(doc_text)
-                    batch_tfs[doc_name] = self.calculate_tfs(tokens)
+                batch_tfs = self.tokenize_documents()
                 self.save_partial_index(batch_tfs)
         finally:
             file_opener.close()
@@ -158,11 +154,6 @@ class InvertedIndex:
         """
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
-
-    def update_index(self, batch_tfs: dict):
-        for doc_name, tokens in batch_tfs.items():
-            for token, tf in tokens.items():
-                self.index[token].append(Posting(doc_name, tf, 0))
 
     def get_unique_tokens(self):
         """Get number of unique tokens"""
