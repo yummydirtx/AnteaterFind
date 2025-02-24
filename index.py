@@ -7,11 +7,12 @@ from nltk.stem import PorterStemmer
 from collections import Counter, defaultdict
 from posting import Posting
 
+
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 class InvertedIndex:
-    def __init__(self, zipPath: str=None):
-        self.index = defaultdict(list) #should be faster
+    def __init__(self, zipPath: str = None):
+        self.index = defaultdict(list)  # should be faster
         self.total_documents = 0
         self.stemmer = PorterStemmer()
         if zipPath is not None:
@@ -33,19 +34,19 @@ class InvertedIndex:
                     tokens = self.tokenize(doc_text)
                     batch_tfs[doc_name] = self.calculate_tfs(tokens)
                 self.update_index(batch_tfs)
-            # Write batch to index.json
+                # Write batch to index.json
                 file_opener.write_batch_to_index(batch_tfs)
         finally:
             file_opener.close()
 
     def tokenize(self, text: str) -> dict:
         """
-        Tokenizes HTML text into alphanumeric words using BeautifulSoup and returns 
+        Tokenizes HTML text into alphanumeric words using BeautifulSoup and returns
         the frequency of each stemmed word.
         """
         # Parse HTML and extract text
-        soup = BeautifulSoup(text,"html.parser")
-        warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+        soup = BeautifulSoup(text, features='xml')
+        warnings.filterwarnings("ignore", category = MarkupResemblesLocatorWarning)
         text = soup.get_text()
 
         # Find all alphanumeric sequences
@@ -55,7 +56,7 @@ class InvertedIndex:
         tokens = [self.stemmer.stem(token.lower()) for token in raw_tokens]
 
         return dict(Counter(tokens))
-    
+
     def tokenize_documents(self) -> dict:
         """
         Tokenizes all documents in the ZIP file.
@@ -65,7 +66,7 @@ class InvertedIndex:
             self.total_documents += 1
             res[doc_name] = self.tokenize(doc_text)
         return res
-    
+
     def calculate_tfs(self, tokens: dict) -> dict:
         """
         Calculates the term frequency of all tokens in a document.
