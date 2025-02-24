@@ -34,8 +34,6 @@ class InvertedIndex:
                     tokens = self.tokenize(doc_text)
                     batch_tfs[doc_name] = self.calculate_tfs(tokens)
                 self.update_index(batch_tfs)
-                # Write batch to index.json
-                file_opener.write_batch_to_index(batch_tfs)
         finally:
             file_opener.close()
 
