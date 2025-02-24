@@ -116,8 +116,8 @@ class InvertedIndex:
             outfile.write('}')
         
         # Remove partial index files
-        #for fname in files:
-            #os.remove(fname)
+        for fname in files:
+            os.remove(fname)
 
     def tokenize(self, text: str) -> dict:
         """
