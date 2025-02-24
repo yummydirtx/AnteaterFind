@@ -3,8 +3,9 @@ class Posting:
         """ intialize posting"""
         self.doc_name = doc_name
         self.tf = tf
-        self.idf = idf
-        self.tf_idf = tf * idf
+        if idf is not None:
+            self.idf = idf
+            self.tf_idf = tf * idf
 
     def __str__(self) -> str:
         """format for postings"""

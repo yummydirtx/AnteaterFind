@@ -26,7 +26,7 @@ class InvertedIndex:
         file_opener = FileOpener(zipPath)
         try:
             while True:
-                documents = file_opener.read_zip(10000)
+                documents = file_opener.read_zip(15000)
                 if not documents:
                     break
                 batch_tfs = {}
@@ -39,60 +39,54 @@ class InvertedIndex:
             file_opener.close()
 
     def save_partial_index(self, batch_tfs: dict):
-        """Save a partial index to disk"""
+        """Save a partial index to disk as a sorted, line-delimited file."""
         partial_index = defaultdict(list)
         for doc_name, tokens in batch_tfs.items():
             for token, tf in tokens.items():
-                partial_index[token].append(Posting(doc_name, tf, 0))
+                partial_index[token].append(Posting(doc_name, tf))
         
-        # Save partial index to disk
         self.partial_index_count += 1
-        with open(f'partial_index_{self.partial_index_count}.json', 'w') as f:
-            json.dump({k: [vars(p) for p in v] for k, v in partial_index.items()}, f)
+        filename = f'partial_index_{self.partial_index_count}.json'
+        with open(filename, 'w') as f:
+            # Write one token entry per line in sorted order
+            for token in sorted(partial_index.keys()):
+                entry = {
+                    "token": token,
+                    "postings": [vars(p) for p in partial_index[token]]
+                }
+                f.write(json.dumps(entry) + "\n")
 
     def merge_partial_indexes(self):
-        """Merge all partial indexes using k-way merge"""
-        
-        # Open all partial index files
+        """Merge partial indexes using a k-way merge without loading everything into memory."""
         files = [f'partial_index_{i}.json' for i in range(1, self.partial_index_count + 1)]
-        file_iterators = []
         
-        # Create iterators for each file
+        file_iters = []
         for fname in files:
-            with open(fname, 'r') as f:
-                data = json.load(f)
-                file_iterators.append(iter(sorted(data.items())))
-
-        # Initialize heap with first item from each iterator
+            fp = open(fname, 'r')
+            line = fp.readline()
+            if line:
+                data = json.loads(line)
+                file_iters.append((data["token"], data["postings"], fp))
+            else:
+                fp.close()
+        
+        # Add a counter as tie-breaker
+        counter = 0
         heap = []
-        for i, it in enumerate(file_iterators):
-            try:
-                token, postings = next(it)
-                heap.append((token, i, postings))
-            except StopIteration:
-                pass
+        for token, postings, fp in file_iters:
+            heap.append((token, counter, postings, fp))
+            counter += 1
         heapq.heapify(heap)
 
-        # Merge
-        current_token = None
-        current_postings = []
-        
         with open('index.json', 'w') as outfile:
             outfile.write('{')
             first_token = True
+            current_token = None
+            current_postings = []
             
             while heap:
-                token, file_index, postings = heapq.heappop(heap)
-                
-                # Try to get next item from the same file
-                try:
-                    next_token, next_postings = next(file_iterators[file_index])
-                    heapq.heappush(heap, (next_token, file_index, next_postings))
-                except StopIteration:
-                    pass
-
-                if current_token != token:
-                    # Write accumulated postings for previous token
+                token, _, postings, fp = heapq.heappop(heap)
+                if current_token is None or token != current_token:
                     if current_token is not None:
                         if not first_token:
                             outfile.write(',')
@@ -101,25 +95,29 @@ class InvertedIndex:
                         json.dump(current_token, outfile)
                         outfile.write(':')
                         json.dump(current_postings, outfile)
-                    
                     current_token = token
                     current_postings = postings
                 else:
                     current_postings.extend(postings)
-
-            # Write last token
+                
+                next_line = fp.readline()
+                if next_line:
+                    data = json.loads(next_line)
+                    heapq.heappush(heap, (data["token"], counter, data["postings"], fp))
+                    counter += 1
+                else:
+                    fp.close()
             if current_token is not None:
                 if not first_token:
                     outfile.write(',')
                 json.dump(current_token, outfile)
                 outfile.write(':')
                 json.dump(current_postings, outfile)
-            
             outfile.write('}')
-
-        # Clean up partial index files
-        for fname in files:
-            os.remove(fname)
+        
+        # Remove partial index files
+        #for fname in files:
+            #os.remove(fname)
 
     def tokenize(self, text: str) -> dict:
         """
@@ -169,3 +167,10 @@ class InvertedIndex:
     def get_unique_tokens(self):
         """Get number of unique tokens"""
         return len(self.unique_tokens)
+
+if __name__ == "__main__":
+    index = InvertedIndex()
+    index.partial_index_count = 3
+    index.merge_partial_indexes()
+    print(f"Total documents indexed: {index.total_documents}")
+    print(f"Unique tokens: {index.get_unique_tokens()}")
