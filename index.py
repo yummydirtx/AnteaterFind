@@ -1,14 +1,10 @@
 from file import FileOpener
-from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning, XMLParsedAsHTMLWarning
 import warnings
-import json
 import re
 from nltk.stem import PorterStemmer
-from collections import Counter, defaultdict
-from posting import Posting
-import heapq
-from itertools import islice
-import os
+from nltk.tokenize import word_tokenize, RegexpTokenizer
+from collections import Counter
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
@@ -28,7 +24,6 @@ class InvertedIndex:
         self.unique_tokens = set()
         if zipPath is not None:
             self.load_zip(zipPath)
-            self.merge_partial_indexes()
 
     def load_zip(self, zipPath: str):
         """
@@ -42,114 +37,37 @@ class InvertedIndex:
                 if not self.documents:
                     break
                 batch_tfs = self.tokenize_documents()
-                self.save_partial_index(batch_tfs)
+                file_opener.save_partial_index(batch_tfs, self.partial_index_count)
+                self.partial_index_count += 1
         finally:
             file_opener.close()
-
-    def save_partial_index(self, batch_tfs: dict):
-        """
-        Saves a batch of documents as a partial index to disk.
-        Each partial index is sorted and contains one token entry per line.
-        """
-        partial_index = defaultdict(list)
-        for doc_name, tokens in batch_tfs.items():
-            for token, tf in tokens.items():
-                partial_index[token].append(Posting(doc_name, tf))
-        
-        self.partial_index_count += 1
-        filename = f'partial_index_{self.partial_index_count}.json'
-        with open(filename, 'w') as f:
-            # Write one token entry per line in sorted order
-            for token in sorted(partial_index.keys()):
-                entry = {
-                    "token": token,
-                    "postings": [vars(p) for p in partial_index[token]]
-                }
-                f.write(json.dumps(entry) + "\n")
-
-    def merge_partial_indexes(self):
-        """Merge partial indexes using a k-way merge without loading everything into memory."""
-        files = [f'partial_index_{i}.json' for i in range(1, self.partial_index_count + 1)]
-        
-        file_iters = []
-        for fname in files:
-            fp = open(fname, 'r')
-            line = fp.readline()
-            if line:
-                data = json.loads(line)
-                file_iters.append((data["token"], data["postings"], fp))
-            else:
-                fp.close()
-        
-        # Add a counter as tie-breaker
-        counter = 0
-        heap = []
-        for token, postings, fp in file_iters:
-            heap.append((token, counter, postings, fp))
-            counter += 1
-        heapq.heapify(heap)
-
-        with open('index.json', 'w') as outfile:
-            outfile.write('{')
-            first_token = True
-            current_token = None
-            current_postings = []
-            
-            while heap:
-                token, _, postings, fp = heapq.heappop(heap)
-                if current_token is None or token != current_token:
-                    if current_token is not None:
-                        if not first_token:
-                            outfile.write(',')
-                        else:
-                            first_token = False
-                        json.dump(current_token, outfile)
-                        outfile.write(':')
-                        json.dump(current_postings, outfile)
-                    current_token = token
-                    current_postings = postings
-                else:
-                    current_postings.extend(postings)
-                
-                next_line = fp.readline()
-                if next_line:
-                    data = json.loads(next_line)
-                    heapq.heappush(heap, (data["token"], counter, data["postings"], fp))
-                    counter += 1
-                else:
-                    fp.close()
-            if current_token is not None:
-                if not first_token:
-                    outfile.write(',')
-                json.dump(current_token, outfile)
-                outfile.write(':')
-                json.dump(current_postings, outfile)
-            outfile.write('}')
-        
-        # Remove partial index files
-        for fname in files:
-            os.remove(fname)
+            if self.partial_index_count > 0:
+                file_opener.merge_partial_indexes(self.partial_index_count)
 
     def tokenize(self, text: str) -> dict:
         """
-        Tokenizes HTML text into alphanumeric words using BeautifulSoup and returns
+        Tokenizes HTML text using NLTK's word_tokenize and returns
         the frequency of each stemmed word.
         """
         # Parse HTML and extract text
         soup = BeautifulSoup(text, features='lxml')
-        warnings.filterwarnings("ignore", category = MarkupResemblesLocatorWarning)
+        warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+        warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
         text = soup.get_text()
 
-        # Find all alphanumeric sequences
-        raw_tokens = re.findall(r'[A-Za-z0-9]+', text)
-
-        # Convert all tokens to lowercase and stem them
-        tokens = [self.stemmer.stem(token.lower()) for token in raw_tokens]
-
+        # Create tokenizer that only captures alphanumeric
+        tokenizer = RegexpTokenizer(r'[A-Za-z0-9]+')
+        
+        # Tokenize
+        tokens = tokenizer.tokenize(text)
+        
+        # Stem tokens
+        stemmed_tokens = [self.stemmer.stem(token) for token in tokens]
+        
         # Add tokens to set of unique tokens
-        self.unique_tokens.update(tokens)
-
-        return dict(Counter(tokens))
+        self.unique_tokens.update(stemmed_tokens)
+        
+        return dict(Counter(stemmed_tokens))
 
     def tokenize_documents(self) -> dict:
         """
@@ -173,10 +91,3 @@ class InvertedIndex:
     def get_unique_tokens(self):
         """Get number of unique tokens"""
         return len(self.unique_tokens)
-
-if __name__ == "__main__":
-    index = InvertedIndex()
-    index.partial_index_count = 3
-    index.merge_partial_indexes()
-    print(f"Total documents indexed: {index.total_documents}")
-    print(f"Unique tokens: {index.get_unique_tokens()}")

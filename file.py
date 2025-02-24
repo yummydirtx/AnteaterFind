@@ -1,6 +1,10 @@
 import zipfile
 import json
 from tqdm import tqdm
+import os
+import heapq
+from collections import defaultdict
+from posting import Posting
 
 class FileOpener:
     def __init__(self, zipPath: str):
@@ -50,6 +54,92 @@ class FileOpener:
 
         return url_to_content
 
+    def save_partial_index(self, batch_tfs: dict, partial_index_count: int):
+        """
+        Saves a batch of documents as a partial index to disk.
+        Each partial index is sorted and contains one token entry per line.
+        """
+        partial_index = defaultdict(list)
+        for doc_name, tokens in batch_tfs.items():
+            for token, tf in tokens.items():
+                partial_index[token].append(Posting(doc_name, tf))
+        
+        filename = f'partial_index_{partial_index_count}.json'
+        with open(filename, 'w') as f:
+            # Write one token entry per line in sorted order
+            for token in sorted(partial_index.keys()):
+                entry = {
+                    "token": token,
+                    "postings": [vars(p) for p in partial_index[token]]
+                }
+                f.write(json.dumps(entry) + "\n")
+
+    def merge_partial_indexes(self, partial_index_count: int):
+        """Merge partial indexes using a k-way merge without loading everything into memory."""
+        files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
+        
+        file_iters = []
+        for fname in files:
+            fp = open(fname, 'r')
+            line = fp.readline()
+            if line:
+                data = json.loads(line)
+                file_iters.append((data["token"], data["postings"], fp))
+            else:
+                fp.close()
+        
+        counter = 0
+        heap = []
+        for token, postings, fp in file_iters:
+            heap.append((token, counter, postings, fp))
+            counter += 1
+        heapq.heapify(heap)
+
+        with open('index.json', 'w') as outfile:
+            outfile.write('{')
+            first_token = True
+            current_token = None
+            current_postings = []
+            
+            while heap:
+                token, _, postings, fp = heapq.heappop(heap)
+                if current_token is None or token != current_token:
+                    if current_token is not None:
+                        if not first_token:
+                            outfile.write(',')
+                        else:
+                            first_token = False
+                        json.dump(current_token, outfile)
+                        outfile.write(':')
+                        json.dump(current_postings, outfile)
+                    current_token = token
+                    current_postings = postings
+                else:
+                    current_postings.extend(postings)
+                
+                next_line = fp.readline()
+                if next_line:
+                    data = json.loads(next_line)
+                    heapq.heappush(heap, (data["token"], counter, data["postings"], fp))
+                    counter += 1
+                else:
+                    fp.close()
+            
+            if current_token is not None:
+                if not first_token:
+                    outfile.write(',')
+                json.dump(current_token, outfile)
+                outfile.write(':')
+                json.dump(current_postings, outfile)
+            outfile.write('}')
+        
+        # Remove partial index files
+        for fname in files:
+            os.remove(fname)
+
     def close(self):
         """Close the progress bar when done processing all files"""
         self.pbar.close()
+
+if __name__ == "__main__":
+    FileOpener.merge_partial_indexes(None, 4)
