@@ -1,28 +1,34 @@
 class Posting:
     """
     A class representing a posting in an inverted index.
-    Stores document name, term frequency, and optionally IDF and TF-IDF scores.
+    Stores document ID and term frequency.
     """
-    def __init__(self,doc_name: str, tf: float, idf: float = None):
+    def __init__(self, doc_id: int, tf: float):
         """
-        Initialize a posting with document name and term frequency.
+        Initialize a posting with document ID and term frequency.
         Args:
-            doc_name: Name of the document
+            doc_id: ID of the document
             tf: Term frequency in the document
-            idf: Optional inverse document frequency
         """
-        self.doc_name = doc_name
+        self.doc_id = doc_id  # Changed from doc_name to doc_id
         self.tf = tf
-        if idf is not None:
-            self.idf = idf
-            self.tf_idf = tf * idf
+
+    def __lt__(self, other):
+        """
+        Less than comparison based on document ID.
+        Args:
+            other: Another posting instance
+        Returns:
+            bool: True if this posting's doc_id is less than the other's doc_id
+        """
+        return self.doc_id < other.doc_id
 
     def __str__(self) -> str:
         """
         Returns a string representation of the posting.
-        Format: (document_name, tf_idf_score)
+        Format: (document_id, tf)
         """
-        return f"({self.doc_name}, {self.tf_idf:.2f})"
+        return f"({self.doc_id}, {self.tf:.2f})"
 
     def to_dict(self):
         """
@@ -31,10 +37,8 @@ class Posting:
             dict: Dictionary containing posting data
         """
         return {
-            'doc_name': self.doc_name,
+            'doc_id': self.doc_id,
             'tf': self.tf
-            #'idf': self.idf,
-            #'tf_idf': self.tf_idf
         }
 
     @classmethod
@@ -46,6 +50,4 @@ class Posting:
         Returns:
             Posting: New posting instance
         """
-        posting = cls(data['doc_name'], data['tf'], 0)
-        #posting.tf_idf = data['tf_idf']
-        return posting
+        return cls(data['doc_id'], data['tf'])

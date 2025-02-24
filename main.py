@@ -22,7 +22,9 @@ def generate_m1_report(path: str):
         f.write(f"The number of indexed documents: {numDocuments}\n")
         f.write(f"The number of unique words: {numUniqueTokens}\n")
         index_size = os.path.getsize("index.json") / 1024  # Convert bytes to KB
-        f.write(f"The total size (in KB) of index on disk: {index_size:.2f}\n")
+        url_map_size = os.path.getsize("urls.json") / 1024  # Convert bytes to KB
+        total_size = index_size + url_map_size
+        f.write(f"The total size (in KB) of index on disk: {total_size:.2f}\n")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

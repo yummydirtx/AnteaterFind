@@ -11,11 +11,26 @@ class FileOpener:
         """intialize zip"""
         self.zipPath = zipPath
         self.seenUrls = set()
+        self.url_to_id = {}  # Map URLs to numeric IDs
+        self.current_url_id = 0
         
         # Initialize progress tracking
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             self.total_files = len([f for f in zipfolder.namelist() if f.endswith('.json')])
             self.pbar = tqdm(total=self.total_files, desc="Processing files")
+
+    def get_url_id(self, url: str) -> int:
+        """Get or create a numeric ID for a URL"""
+        if url not in self.url_to_id:
+            self.url_to_id[url] = self.current_url_id
+            self.current_url_id += 1
+        return self.url_to_id[url]
+
+    def save_url_mapping(self):
+        """Save the URL to ID mapping to a separate file"""
+        id_to_url = {str(id): url for url, id in self.url_to_id.items()}
+        with open('urls.json', 'w') as f:
+            json.dump(id_to_url, f)
 
     def read_zip(self, count: int = None) -> dict:
         """
@@ -60,9 +75,10 @@ class FileOpener:
         Each partial index is sorted and contains one token entry per line.
         """
         partial_index = defaultdict(list)
-        for doc_name, tokens in batch_tfs.items():
+        for url, tokens in batch_tfs.items():
+            url_id = self.get_url_id(url)
             for token, tf in tokens.items():
-                partial_index[token].append(Posting(doc_name, tf))
+                partial_index[token].append(Posting(url_id, tf))
         
         filename = f'partial_index_{partial_index_count}.json'
         with open(filename, 'w') as f:
@@ -76,6 +92,9 @@ class FileOpener:
 
     def merge_partial_indexes(self, partial_index_count: int):
         """Merge partial indexes using a k-way merge without loading everything into memory."""
+        # Save URL mapping first
+        self.save_url_mapping()
+        
         files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
         
         file_iters = []
@@ -140,6 +159,3 @@ class FileOpener:
     def close(self):
         """Close the progress bar when done processing all files"""
         self.pbar.close()
-
-if __name__ == "__main__":
-    FileOpener.merge_partial_indexes(None, 4)
