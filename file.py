@@ -97,6 +97,7 @@ class FileOpener:
         self.save_url_mapping()
 
         files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
+        merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes")
 
         file_iters = []
         for fname in files:
@@ -107,6 +108,11 @@ class FileOpener:
                 file_iters.append((data["token"], data["postings"], fp))
             else:
                 fp.close()
+            merge_pbar.update(1)
+
+        # Reset progress bar for the actual merging process
+        merge_pbar.reset()
+        merge_pbar.set_description("Processing tokens")
 
         counter = 0
         heap = []
@@ -152,6 +158,9 @@ class FileOpener:
                 outfile.write(':')
                 json.dump(current_postings, outfile)
             outfile.write('}')
+
+        # Close the progress bar
+        merge_pbar.close()
 
         # Remove partial index files
         for fname in files:
