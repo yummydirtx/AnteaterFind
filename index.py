@@ -25,7 +25,7 @@ class InvertedIndex:
             f.write('')
         try:
             while True:
-                documents = file_opener.read_zip(1000)
+                documents = file_opener.read_zip(10000)
                 if not documents:
                     break
                 batch_tfs = {}
