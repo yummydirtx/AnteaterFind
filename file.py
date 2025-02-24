@@ -13,7 +13,7 @@ class FileOpener:
         self.seenUrls = set()
         self.url_to_id = {}  # Map URLs to numeric IDs
         self.current_url_id = 0
-        
+
         # Initialize progress tracking
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             self.total_files = len([f for f in zipfolder.namelist() if f.endswith('.json')])
@@ -48,16 +48,17 @@ class FileOpener:
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             # Get list of JSON files
             json_files = [f for f in zipfolder.namelist() if f.endswith('.json')]
-            
+
             for file_name in json_files:
                 if count is not None and files_processed >= count:
                     break
-                    
+
                 if file_name.endswith(".json"):
                     try:
                         with zipfolder.open(file_name) as file:
                             for line in file:
-                                json_data = json.loads(line.decode('utf-8'))                            # Only add entries that have both url and content
+                                json_data = json.loads(line.decode('utf-8'))
+                                # Only add entries that have both url and content
                                 if 'url' in json_data and 'content' in json_data:
                                     if json_data['url'] not in self.seenUrls:
                                         self.seenUrls.add(json_data['url'])
@@ -79,7 +80,7 @@ class FileOpener:
             url_id = self.get_url_id(url)
             for token, tf in tokens.items():
                 partial_index[token].append(Posting(url_id, tf))
-        
+
         filename = f'partial_index_{partial_index_count}.json'
         with open(filename, 'w') as f:
             # Write one token entry per line in sorted order
@@ -94,29 +95,32 @@ class FileOpener:
         """Merge partial indexes using a k-way merge without loading everything into memory."""
         # Save URL mapping first
         self.save_url_mapping()
-        
+
         files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
-        
+
         file_iters = []
         for fname in files:
-            with open(fname, 'r') as fp:
-                line = fp.readline()
-                if line:
-                    data = json.loads(line)
-                    file_iters.append((data["token"], data["postings"], fp))
+            fp = open(fname, 'r')
+            line = fp.readline()
+            if line:
+                data = json.loads(line)
+                file_iters.append((data["token"], data["postings"], fp))
+            else:
+                fp.close()
 
         counter = 0
         heap = []
         for token, postings, fp in file_iters:
-            heapq.heappush(heap, (token, counter, postings, fp))
+            heap.append((token, counter, postings, fp))
             counter += 1
+        heapq.heapify(heap)
 
         with open('index.json', 'w') as outfile:
             outfile.write('{')
             first_token = True
             current_token = None
             current_postings = []
-            
+
             while heap:
                 token, _, postings, fp = heapq.heappop(heap)
                 if current_token is None or token != current_token:
@@ -132,12 +136,14 @@ class FileOpener:
                     current_postings = postings
                 else:
                     current_postings.extend(postings)
-                
+
                 next_line = fp.readline()
                 if next_line:
                     data = json.loads(next_line)
                     heapq.heappush(heap, (data["token"], counter, data["postings"], fp))
                     counter += 1
+                else:
+                    fp.close()
 
             if current_token is not None:
                 if not first_token:
@@ -146,7 +152,7 @@ class FileOpener:
                 outfile.write(':')
                 json.dump(current_postings, outfile)
             outfile.write('}')
-        
+
         # Remove partial index files
         for fname in files:
             os.remove(fname)
