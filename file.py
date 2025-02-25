@@ -36,12 +36,27 @@ class FileOpener:
         """Checks if the zip provided is valid"""
         if not zipfile.is_zipfile(self.zipPath):
             raise zipfile.BadZipFile("The file is not a valid ZIP.")
+
     def get_json_file_list(self):
         """Retrieve list of json files from zip folder"""
         # need to probably either in here or in another function verify if its a good one or not
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             return [f for f in zipfolder.namelist() if f.endswith('.json')]
 
+    def parse_json_file(self, zipfolder, file_name):
+        """parse information from a json file, return url, content """
+        try:
+            with zipfolder.open(file_name) as file:
+                for line in file:
+                    try:
+                        json_data = json.loads(line.decode('utf-8'))
+                        if 'url' in json_data and 'content' in json_data:
+                            #may consider yield
+                            return json_data['url'], json_data['content']
+                    except json.JSONDecodeError:
+                        print(f"Invalid JSON in file: {file_name}")
+        except Exception as e:
+            print(f"Error reading {file_name}")
 
     def read_zip(self, count: int = None) -> dict:
         """
@@ -61,21 +76,6 @@ class FileOpener:
             for file_name in json_files:
                 if count is not None and files_processed >= count:
                     break
-
-                if file_name.endswith(".json"):
-                    try:
-                        with zipfolder.open(file_name) as file:
-                            for line in file:
-                                json_data = json.loads(line.decode('utf-8'))
-                                # Only add entries that have both url and content
-                                if 'url' in json_data and 'content' in json_data:
-                                    if json_data['url'] not in self.seenUrls:
-                                        self.seenUrls.add(json_data['url'])
-                                        url_to_content[json_data['url']] = json_data['content']
-                                        files_processed += 1
-                                        self.pbar.update(1)
-                    except json.JSONDecodeError:
-                        print(f"invalid JSON file: {file_name}")
 
         return url_to_content
 
