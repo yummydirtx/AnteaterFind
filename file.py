@@ -87,19 +87,21 @@ class FileOpener:
                         self.pbar.update(1)
 
         return url_to_content
-
-    def save_partial_index(self, batch_tfs: dict, partial_index_count: int):
-        """
-        Saves a batch of documents as a partial index to disk.
-        Each partial index is sorted and contains one token entry per line.
-        """
+    def create_partial_index(self, batch_tfs):
+        """Creates a partial index from batch of tfs"""
         partial_index = defaultdict(list)
         for url, tokens in batch_tfs.items():
             url_id = self.get_url_id(url)
             for token, tf in tokens.items():
                 partial_index[token].append(Posting(url_id, tf))
+        return partial_index
 
-        filename = f'partial_index_{partial_index_count}.json'
+    def write_partial_index(self, partial_index, filename):
+        """
+        writes partial index to file in a sorted order
+        Each partial index is sorted and contains one token entry per line.
+        """
+        # may consider another way to reduce memory on disk
         with open(filename, 'w') as f:
             # Write one token entry per line in sorted order
             for token in sorted(partial_index.keys()):
@@ -108,6 +110,12 @@ class FileOpener:
                     "postings": [vars(p) for p in partial_index[token]]
                 }
                 f.write(json.dumps(entry) + "\n")
+    def save_partial_index(self, batch_tfs, partial_index_count):
+        """saves partial index to disk"""
+        #may consider smth else to save memory
+        partial_index = self.create_partial_index(batch_tfs)
+        filename = f'partial_index_{partial_index_count}.json'
+        self.write_partial_index(partial_index, filename)
 
     def _initialize_file_iterators(self, files, merge_pbar):
         """Initialize file iterators for each partial index file"""
