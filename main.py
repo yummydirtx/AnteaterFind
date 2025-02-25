@@ -16,7 +16,7 @@ def generate_m1_report(path: str):
     """
     index = InvertedIndex(path) #test
     numDocuments = index.total_documents
-    numUniqueTokens = index.get_unique_tokens()
+    numUniqueTokens = 0
 
     with open("M1Report.txt", 'w') as f:
         f.write(f"The number of indexed documents: {numDocuments}\n")

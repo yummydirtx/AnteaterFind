@@ -5,6 +5,9 @@ import re
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from collections import Counter
+import math
+import json
+import ijson
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
@@ -21,7 +24,6 @@ class InvertedIndex:
         self.total_documents = 0
         self.stemmer = PorterStemmer()
         self.partial_index_count = 0
-        self.unique_tokens = set()
         if zipPath is not None:
             self.load_zip(zipPath)
 
@@ -43,6 +45,7 @@ class InvertedIndex:
             file_opener.close()
             if self.partial_index_count > 0:
                 file_opener.merge_partial_indexes(self.partial_index_count)
+                self.build_tfidf_index()
 
     def tokenize(self, text: str) -> dict:
         """
@@ -63,9 +66,6 @@ class InvertedIndex:
         
         # Stem tokens
         stemmed_tokens = [self.stemmer.stem(token) for token in tokens]
-        
-        # Add tokens to set of unique tokens
-        self.unique_tokens.update(stemmed_tokens)
         
         return dict(Counter(stemmed_tokens))
 
@@ -88,6 +88,23 @@ class InvertedIndex:
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
 
-    def get_unique_tokens(self):
-        """Get number of unique tokens"""
-        return len(self.unique_tokens)
+    def build_tfidf_index(self):
+        with open("index.json", "rb") as f_in, open("tfidf.json", "w") as f_out:
+            f_out.write("{")
+            first_token = True
+            parser = ijson.kvitems(f_in, "")
+            for token, postings in parser:
+                df = len(postings)
+                idf = math.log10(self.total_documents / df)
+                for p in postings:
+                    p["tfidf"] = p["tf"] * idf
+                    # Remove the term frequency
+                    del p["tf"]
+                if not first_token:
+                    f_out.write(",")
+                else:
+                    first_token = False
+                f_out.write(json.dumps(token))
+                f_out.write(":")
+                f_out.write(json.dumps(postings))
+            f_out.write("}")
