@@ -52,7 +52,7 @@ class FileOpener:
                         json_data = json.loads(line.decode('utf-8'))
                         if 'url' in json_data and 'content' in json_data:
                             #may consider yield
-                            return json_data['url'], json_data['content']
+                            yield json_data['url'], json_data['content']
                     except json.JSONDecodeError:
                         print(f"Invalid JSON in file: {file_name}")
         except Exception as e:
@@ -66,16 +66,25 @@ class FileOpener:
         """
 
         # Dictionary to store url -> content mapping
+        self.check_zip_file()
         url_to_content = {}
         files_processed = 0
 
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
-            # Get list of JSON files
-            json_files = [f for f in zipfolder.namelist() if f.endswith('.json')]
+            json_files = self.get_json_file_list()
 
             for file_name in json_files:
                 if count is not None and files_processed >= count:
                     break
+
+                for url, content in self.parse_json_file(zipfolder, file_name):
+                    if count is not None and files_processed >= count:
+                        break
+                    if url not in self.seenUrls:
+                        self.seenUrls.add(url)
+                        url_to_content[url] = content
+                        files_processed += 1
+                        self.pbar.update(1)
 
         return url_to_content
 
