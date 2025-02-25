@@ -100,14 +100,8 @@ class FileOpener:
                 }
                 f.write(json.dumps(entry) + "\n")
 
-    def merge_partial_indexes(self, partial_index_count: int):
-        """Merge partial indexes using a k-way merge without loading everything into memory."""
-        # Save URL mapping first
-        self.save_url_mapping()
-
-        files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
-        merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes")
-
+    def _initialize_file_iterators(self, files, merge_pbar):
+        """Initialize file iterators for each partial index file"""
         file_iters = []
         for fname in files:
             fp = open(fname, 'r')
@@ -118,17 +112,39 @@ class FileOpener:
             else:
                 fp.close()
             merge_pbar.update(1)
+        return file_iters
 
-        # Reset progress bar for the actual merging process
-        merge_pbar.reset()
-        merge_pbar.set_description("Processing tokens")
-
-        counter = 0
+    def _initialize_heap(self, file_iters):
+        """Initialize the heap with the first entry from each file"""
         heap = []
+        counter = 0
         for token, postings, fp in file_iters:
             heap.append((token, counter, postings, fp))
             counter += 1
         heapq.heapify(heap)
+        return heap, counter
+
+    def _write_current_token(self, outfile, current_token, current_postings, first_token):
+        """Write the current token and its postings to the output file"""
+        if not first_token:
+            outfile.write(',')
+        json.dump(current_token, outfile)
+        outfile.write(':')
+        json.dump(current_postings, outfile)
+
+    def merge_partial_indexes(self, partial_index_count: int):
+        """Merge partial indexes using a k-way merge without loading everything into memory."""
+        self.save_url_mapping()
+
+        files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
+        merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes")
+
+        file_iters = self._initialize_file_iterators(files, merge_pbar)
+        
+        merge_pbar.reset()
+        merge_pbar.set_description("Processing tokens")
+
+        heap, counter = self._initialize_heap(file_iters)
 
         with open('index.json', 'w') as outfile:
             outfile.write('{')
@@ -138,15 +154,11 @@ class FileOpener:
 
             while heap:
                 token, _, postings, fp = heapq.heappop(heap)
+                
                 if current_token is None or token != current_token:
                     if current_token is not None:
-                        if not first_token:
-                            outfile.write(',')
-                        else:
-                            first_token = False
-                        json.dump(current_token, outfile)
-                        outfile.write(':')
-                        json.dump(current_postings, outfile)
+                        self._write_current_token(outfile, current_token, current_postings, first_token)
+                        first_token = False
                     current_token = token
                     current_postings = postings
                 else:
@@ -161,17 +173,11 @@ class FileOpener:
                     fp.close()
 
             if current_token is not None:
-                if not first_token:
-                    outfile.write(',')
-                json.dump(current_token, outfile)
-                outfile.write(':')
-                json.dump(current_postings, outfile)
+                self._write_current_token(outfile, current_token, current_postings, first_token)
             outfile.write('}')
 
-        # Close the progress bar
         merge_pbar.close()
 
-        # Remove partial index files
         for fname in files:
             os.remove(fname)
 
