@@ -32,14 +32,17 @@ class FileOpener:
         with open('urls.json', 'w') as f:
             json.dump(id_to_url, f)
 
+    def check_zip_file(self):
+        """Checks if the zip provided is valid"""
+        if not zipfile.is_zipfile(self.zipPath):
+            raise zipfile.BadZipFile("The file is not a valid ZIP.")
+
     def read_zip(self, count: int = None) -> dict:
         """
         Read files from the ZIP and return a dict mapping urls to content
         param count: The number of files to read from the ZIP. If None, read all files.
         return: A dictionary mapping URLs to their content.
         """
-        if not zipfile.is_zipfile(self.zipPath):
-            raise zipfile.BadZipFile("The file is not a valid ZIP.")
 
         # Dictionary to store url -> content mapping
         url_to_content = {}
