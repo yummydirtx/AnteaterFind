@@ -36,6 +36,12 @@ class FileOpener:
         """Checks if the zip provided is valid"""
         if not zipfile.is_zipfile(self.zipPath):
             raise zipfile.BadZipFile("The file is not a valid ZIP.")
+    def get_json_file_list(self):
+        """Retrieve list of json files from zip folder"""
+        # need to probably either in here or in another function verify if its a good one or not
+        with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
+            return [f for f in zipfolder.namelist() if f.endswith('.json')]
+
 
     def read_zip(self, count: int = None) -> dict:
         """
