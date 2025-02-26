@@ -25,6 +25,7 @@ class InvertedIndex:
         self.stemmer = PorterStemmer()
         self.partial_index_count = 0
         if zipPath is not None:
+            self.file_opener = FileOpener(zipPath)
             self.load_zip(zipPath)
 
     def load_zip(self, zipPath: str):
@@ -32,19 +33,18 @@ class InvertedIndex:
         Processes documents from a ZIP file in batches to manage memory usage.
         Creates partial indexes for each batch.
         """
-        file_opener = FileOpener(zipPath)
         try:
             while True:
-                self.documents = file_opener.read_zip(15000)
+                self.documents = self.file_opener.read_zip(15000)
                 if not self.documents:
                     break
                 batch_tfs = self.tokenize_documents()
-                file_opener.save_partial_index(batch_tfs, self.partial_index_count)
+                self.file_opener.save_partial_index(batch_tfs, self.partial_index_count)
                 self.partial_index_count += 1
         finally:
-            file_opener.close()
+            self.file_opener.close()
             if self.partial_index_count > 0:
-                file_opener.merge_partial_indexes(self.partial_index_count)
+                self.file_opener.merge_partial_indexes(self.partial_index_count)
                 self.build_tfidf_index()
 
     def tokenize(self, text: str) -> dict:
@@ -89,22 +89,12 @@ class InvertedIndex:
         return {token: count / total_tokens for token, count in tokens.items()}
 
     def build_tfidf_index(self):
-        with open("index.json", "rb") as f_in, open("tfidf.json", "w") as f_out:
-            f_out.write("{")
-            first_token = True
-            parser = ijson.kvitems(f_in, "")
-            for token, postings in parser:
-                df = len(postings)
-                idf = math.log10(self.total_documents / df)
-                for p in postings:
-                    p["tfidf"] = p["tf"] * idf
-                    # Remove the term frequency
-                    del p["tf"]
-                if not first_token:
-                    f_out.write(",")
-                else:
-                    first_token = False
-                f_out.write(json.dumps(token))
-                f_out.write(":")
-                f_out.write(json.dumps(postings))
-            f_out.write("}")
+        self.file_opener.write_tfidf_index(self.total_documents)
+
+    def unique_tokens(self):
+        with open('index.json', 'r') as f:
+            parser = ijson.kvitems(f, "")
+            count = 0
+            for _ in parser:
+                count += 1
+        return count
