@@ -5,6 +5,8 @@ import os
 import heapq
 from collections import defaultdict
 from posting import Posting
+import ijson
+import math
 
 class FileOpener:
     def __init__(self, zipPath: str):
@@ -160,6 +162,7 @@ class FileOpener:
         
         merge_pbar.reset()
         merge_pbar.set_description("Processing tokens")
+        merge_pbar.total = None
 
         heap, counter = self._initialize_heap(file_iters)
 
@@ -197,6 +200,31 @@ class FileOpener:
 
         for fname in files:
             os.remove(fname)
+
+    def write_tfidf_index(self, total_documents: int):
+        """Calculate and write the TF-IDF index to disk"""
+        pbar = tqdm(desc="Calculating TF-IDF")
+        with open("index.json", "rb") as f_in, open("tfidf.json", "w") as f_out:
+            f_out.write("{")
+            first_token = True
+            parser = ijson.kvitems(f_in, "")
+            for token, postings in parser:
+                pbar.update(1)
+                df = len(postings)
+                idf = math.log10(total_documents / df)
+                for p in postings:
+                    p["tfidf"] = p["tf"] * idf
+                    # Remove the term frequency
+                    del p["tf"]
+                if not first_token:
+                    f_out.write(",")
+                else:
+                    first_token = False
+                f_out.write(json.dumps(token))
+                f_out.write(":")
+                f_out.write(json.dumps(postings))
+            f_out.write("}")
+        self.pbar.close()
 
     def close(self):
         """Close the progress bar when done processing all files"""

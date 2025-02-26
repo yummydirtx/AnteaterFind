@@ -5,6 +5,9 @@ import re
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize, RegexpTokenizer
 from collections import Counter
+import math
+import json
+import ijson
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
@@ -21,8 +24,8 @@ class InvertedIndex:
         self.total_documents = 0
         self.stemmer = PorterStemmer()
         self.partial_index_count = 0
-        self.unique_tokens = set()
         if zipPath is not None:
+            self.file_opener = FileOpener(zipPath)
             self.load_zip(zipPath)
 
     def load_zip(self, zipPath: str):
@@ -30,19 +33,19 @@ class InvertedIndex:
         Processes documents from a ZIP file in batches to manage memory usage.
         Creates partial indexes for each batch.
         """
-        file_opener = FileOpener(zipPath)
         try:
             while True:
-                self.documents = file_opener.read_zip(15000)
+                self.documents = self.file_opener.read_zip(15000)
                 if not self.documents:
                     break
                 batch_tfs = self.tokenize_documents()
-                file_opener.save_partial_index(batch_tfs, self.partial_index_count)
+                self.file_opener.save_partial_index(batch_tfs, self.partial_index_count)
                 self.partial_index_count += 1
         finally:
-            file_opener.close()
+            self.file_opener.close()
             if self.partial_index_count > 0:
-                file_opener.merge_partial_indexes(self.partial_index_count)
+                self.file_opener.merge_partial_indexes(self.partial_index_count)
+                self.build_tfidf_index()
 
     def tokenize(self, text: str) -> dict:
         """
@@ -63,9 +66,6 @@ class InvertedIndex:
         
         # Stem tokens
         stemmed_tokens = [self.stemmer.stem(token) for token in tokens]
-        
-        # Add tokens to set of unique tokens
-        self.unique_tokens.update(stemmed_tokens)
         
         return dict(Counter(stemmed_tokens))
 
@@ -88,6 +88,13 @@ class InvertedIndex:
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
 
-    def get_unique_tokens(self):
-        """Get number of unique tokens"""
-        return len(self.unique_tokens)
+    def build_tfidf_index(self):
+        self.file_opener.write_tfidf_index(self.total_documents)
+
+    def unique_tokens(self):
+        with open('index.json', 'r') as f:
+            parser = ijson.kvitems(f, "")
+            count = 0
+            for _ in parser:
+                count += 1
+        return count
