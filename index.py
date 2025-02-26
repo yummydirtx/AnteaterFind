@@ -45,7 +45,6 @@ class InvertedIndex:
             self.file_opener.close()
             if self.partial_index_count > 0:
                 self.file_opener.merge_partial_indexes(self.partial_index_count)
-                self.build_tfidf_index()
 
     def tokenize(self, text: str) -> dict:
         """
@@ -88,13 +87,21 @@ class InvertedIndex:
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
 
-    def build_tfidf_index(self):
-        self.file_opener.write_tfidf_index(self.total_documents)
 
     def unique_tokens(self):
-        with open('index.json', 'r') as f:
-            parser = ijson.kvitems(f, "")
-            count = 0
-            for _ in parser:
-                count += 1
-        return count
+        """
+        Count the unique tokens in the index.
+        """
+        try:
+            # First try to use token positions file for a quick count
+            with open('token_positions.json', 'r') as f:
+                token_positions = json.load(f)
+                return len(token_positions)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Fall back to counting from the index file
+            with open('index.json', 'r') as f:
+                parser = ijson.kvitems(f, "")
+                count = 0
+                for _ in parser:
+                    count += 1
+            return count
