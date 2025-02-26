@@ -79,10 +79,18 @@ class IndexManager:
         heapq.heapify(heap)
         return heap, counter
 
-    def _write_current_token(self, outfile, current_token, current_postings, first_token):
-        """Write the current token and its postings to the output file"""
+    def _write_current_token(self, outfile, current_token, current_postings, first_token, token_positions):
+        """
+        Write the current token and its postings to the output file.
+        Also track the byte position of each token.
+        """
         if not first_token:
             outfile.write(',')
+        
+        # Record position before writing the token
+        token_position = outfile.tell()
+        token_positions[current_token] = token_position
+        
         json.dump(current_token, outfile)
         outfile.write(':')
         json.dump(current_postings, outfile)
@@ -101,6 +109,9 @@ class IndexManager:
         merge_pbar.total = None
 
         heap, counter = self._initialize_heap(file_iters)
+        
+        # Dictionary to store token positions in the index file
+        token_positions = {}
 
         with open('index.json', 'w') as outfile:
             outfile.write('{')
@@ -113,7 +124,7 @@ class IndexManager:
                 
                 if current_token is None or token != current_token:
                     if current_token is not None:
-                        self._write_current_token(outfile, current_token, current_postings, first_token)
+                        self._write_current_token(outfile, current_token, current_postings, first_token, token_positions)
                         first_token = False
                     current_token = token
                     current_postings = postings
@@ -129,36 +140,16 @@ class IndexManager:
                     fp.close()
 
             if current_token is not None:
-                self._write_current_token(outfile, current_token, current_postings, first_token)
+                self._write_current_token(outfile, current_token, current_postings, first_token, token_positions)
             outfile.write('}')
 
         merge_pbar.close()
+        
+        # Save token positions to a separate file
+        print("Saving token positions for fast lookup...")
+        with open('token_positions.json', 'w') as f:
+            json.dump(token_positions, f)
 
         # Clean up temporary files
         for fname in files:
             os.remove(fname)
-
-    def write_tfidf_index(self, total_documents: int):
-        """Calculate and write the TF-IDF index to disk"""
-        pbar = tqdm(desc="Calculating TF-IDF")
-        with open("index.json", "rb") as f_in, open("tfidf.json", "w") as f_out:
-            f_out.write("{")
-            first_token = True
-            parser = ijson.kvitems(f_in, "")
-            for token, postings in parser:
-                pbar.update(1)
-                df = len(postings)
-                idf = math.log10(total_documents / df)
-                for p in postings:
-                    p["tfidf"] = p["tf"] * idf
-                    # Remove the term frequency
-                    del p["tf"]
-                if not first_token:
-                    f_out.write(",")
-                else:
-                    first_token = False
-                f_out.write(json.dumps(token))
-                f_out.write(":")
-                f_out.write(json.dumps(postings))
-            f_out.write("}")
-        pbar.close()
