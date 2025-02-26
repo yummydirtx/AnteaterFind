@@ -2,6 +2,7 @@ from file import FileOpener
 import unittest
 import json
 import os
+from index import InvertedIndex
 
 class TestFile(unittest.TestCase):
     def test_read_zip(self):
@@ -90,3 +91,10 @@ class TestFile(unittest.TestCase):
             for fname in test_files:
                 if os.path.exists(fname):
                     os.remove(fname)
+
+    def test_write_tfidf_index(self):
+        InvertedIndex("zips/dummy.zip")
+        with open('tfidf.json', 'r') as f:
+            tfidf_index = json.load(f)
+        
+        self.assertEqual(tfidf_index["onli"][0]['tfidf'], 0.3010299956639812)
