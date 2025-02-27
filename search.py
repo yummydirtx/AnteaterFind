@@ -330,7 +330,7 @@ class Search:
             use_ranking: Whether to rank results by relevance (default: True)
             
         Returns:
-            List of (doc_id, url, score, tf_idf_info) tuples for matching documents
+            List of (doc_id, url, composite_score, tf_idf_info) tuples for matching documents
         """
         # Process query
         query_terms = self.tokenize_query(query)
@@ -353,31 +353,28 @@ class Search:
             # Calculate document vectors
             doc_vectors = self.calculate_document_vectors(matching_doc_ids, query_terms)
             
-            # Calculate scores
+            # Calculate scores using both metrics
             scores = []
             
-            # Handle single-term queries differently to avoid all-1.0 cosine similarities
-            if len(query_terms) == 1:
-                term = query_terms[0]
-                for doc_id, doc_vector in doc_vectors.items():
-                    # Use the actual TF-IDF value as the score
-                    if term in doc_vector:
-                        scores.append((doc_id, doc_vector[term], doc_vector))
-            else:
-                # For multi-term queries, use cosine similarity as before
-                for doc_id, doc_vector in doc_vectors.items():
-                    similarity = self.cosine_similarity(query_vector, doc_vector)
-                    scores.append((doc_id, similarity, doc_vector))
+            for doc_id, doc_vector in doc_vectors.items():
+                # Calculate cosine similarity (primary sort criteria)
+                cosine_sim = self.cosine_similarity(query_vector, doc_vector)
                 
-            # Sort by score in descending order
-            scores.sort(key=lambda x: x[1], reverse=True)
+                # Calculate TF-IDF average (secondary sort criteria)
+                tf_idf_avg = sum(doc_vector.values()) / len(query_terms)
+                
+                # Store both metrics for sorting
+                scores.append((doc_id, cosine_sim, tf_idf_avg, doc_vector))
             
-            # Format results with TF-IDF information
-            results = [(doc_id, self.urls[doc_id], score, doc_vector) 
-                      for doc_id, score, doc_vector in scores]
+            # Sort first by cosine similarity, then by TF-IDF average
+            scores.sort(key=lambda x: (x[1], x[2]), reverse=True)
+            
+            # Create a composite score that combines both metrics for display
+            # Use cosine similarity as the main score, but keep it separate internally
+            results = [(doc_id, self.urls[doc_id], cosine_sim, doc_vector) 
+                      for doc_id, cosine_sim, _, doc_vector in scores]
         else:
             # Just return matching documents without scoring
-            # For non-ranked results, include empty TF-IDF info
             results = [(doc_id, self.urls[doc_id], 1.0, {}) for doc_id in matching_doc_ids]
             
         return results
