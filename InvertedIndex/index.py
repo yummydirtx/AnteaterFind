@@ -45,6 +45,17 @@ class InvertedIndex:
             self.file_opener.close()
             if self.partial_index_count > 0:
                 self.file_opener.merge_partial_indexes(self.partial_index_count)
+    def weighted_tags(self, soup):
+        """Gets text from within tags and applies weight"""
+        tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
+        weighted_tokens = []
+        #https://pytutorial.com/beautifulsoup-how-to-get-text-inside-tag-or-tgs/
+        for tag, weight in tag_weights.items():
+            for word in soup.find_all(tag):
+                text = word.get_text()
+                tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
+                weighted_tokens.extend([token for token in tokens for _ in range(int(weight))])
+        return weighted_tokens
 
     def tokenize(self, text: str) -> dict:
         """
@@ -62,11 +73,16 @@ class InvertedIndex:
         
         # Tokenize
         tokens = tokenizer.tokenize(text)
-        
+
+        #weighted token
+        weighted_tokens = self.weighted_tags(soup)
+
         # Stem tokens
         stemmed_tokens = [self.stemmer.stem(token) for token in tokens]
+
+        all_tokens = weighted_tokens + stemmed_tokens
         
-        return dict(Counter(stemmed_tokens))
+        return dict(Counter(all_tokens))
 
     def tokenize_documents(self) -> dict:
         """
