@@ -1,4 +1,4 @@
-from index import InvertedIndex
+from InvertedIndex.index import InvertedIndex
 import unittest
 
 class TestIndex(unittest.TestCase):

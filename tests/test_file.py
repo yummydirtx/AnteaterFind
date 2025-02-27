@@ -1,5 +1,5 @@
 import unittest
-from file import FileOpener
+from InvertedIndex.file import FileOpener
 
 class TestFile(unittest.TestCase):
     def test_read_zip(self):

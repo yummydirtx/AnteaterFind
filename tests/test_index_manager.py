@@ -1,7 +1,7 @@
 import unittest
 import json
 import os
-from index_manager import IndexManager
+from InvertedIndex.index_manager import IndexManager
 from collections import defaultdict
 
 class TestIndexManager(unittest.TestCase):

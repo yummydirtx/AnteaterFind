@@ -1,6 +1,6 @@
 import unittest
 import zipfile
-from zip_handler import ZipHandler
+from InvertedIndex.zip_handler import ZipHandler
 
 class TestZipHandler(unittest.TestCase):
     def test_check_zip_file(self):
