@@ -1,10 +1,8 @@
 import json
 import math
-import ijson
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from nltk.stem import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
-from posting import Posting
 
 class LRUCache:
     """
