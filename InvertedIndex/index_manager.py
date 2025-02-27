@@ -1,10 +1,8 @@
 import json
 import heapq
-import math
 import os
 from collections import defaultdict
-from typing import Dict, List, Tuple, Any
-import ijson
+from typing import Dict, List
 from tqdm import tqdm
 from .posting import Posting
 
