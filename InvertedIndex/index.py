@@ -3,9 +3,8 @@ from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning, XMLParsedAsHTMLWar
 import warnings
 import re
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize, RegexpTokenizer
+from nltk.tokenize import RegexpTokenizer
 from collections import Counter
-import math
 import json
 import ijson
 import multiprocessing
