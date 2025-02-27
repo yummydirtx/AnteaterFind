@@ -353,12 +353,21 @@ class Search:
             # Calculate document vectors
             doc_vectors = self.calculate_document_vectors(matching_doc_ids, query_terms)
             
-            # Calculate similarity scores
+            # Calculate scores
             scores = []
-            for doc_id, doc_vector in doc_vectors.items():
-                similarity = self.cosine_similarity(query_vector, doc_vector)
-                # Store the doc_vector alongside the score for later display
-                scores.append((doc_id, similarity, doc_vector))
+            
+            # Handle single-term queries differently to avoid all-1.0 cosine similarities
+            if len(query_terms) == 1:
+                term = query_terms[0]
+                for doc_id, doc_vector in doc_vectors.items():
+                    # Use the actual TF-IDF value as the score
+                    if term in doc_vector:
+                        scores.append((doc_id, doc_vector[term], doc_vector))
+            else:
+                # For multi-term queries, use cosine similarity as before
+                for doc_id, doc_vector in doc_vectors.items():
+                    similarity = self.cosine_similarity(query_vector, doc_vector)
+                    scores.append((doc_id, similarity, doc_vector))
                 
             # Sort by score in descending order
             scores.sort(key=lambda x: x[1], reverse=True)
