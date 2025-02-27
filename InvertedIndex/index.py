@@ -8,8 +8,56 @@ from collections import Counter
 import math
 import json
 import ijson
+import multiprocessing
+from functools import partial
+import os
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
+
+# Worker function for multiprocessing
+def tokenize_chunk(chunk, stemmer):
+    """
+    Process a chunk of documents in a separate process
+    
+    Args:
+        chunk: Dictionary of document name to document text
+        stemmer: PorterStemmer instance
+        
+    Returns:
+        Dictionary mapping document names to their raw token counts
+    """
+    result = {}
+    for doc_name, doc_text in chunk.items():
+        # Parse HTML and extract text
+        soup = BeautifulSoup(doc_text, features='xml')
+        warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+        warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+        text = soup.get_text()
+
+        # Create tokenizer that only captures alphanumeric
+        tokenizer = RegexpTokenizer(r'[A-Za-z0-9]+')
+        
+        # Tokenize
+        tokens = tokenizer.tokenize(text)
+        
+        # Extract weighted tokens
+        weighted_tokens = []
+        tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
+        for tag, weight in tag_weights.items():
+            for word in soup.find_all(tag):
+                text = word.get_text()
+                tokens_in_tag = re.findall(r'\b[A-Za-z0-9]+\b', text)
+                weighted_tokens.extend([token for token in tokens_in_tag for _ in range(int(weight))])
+        
+        # Stem tokens
+        stemmed_tokens = [stemmer.stem(token) for token in tokens]
+        
+        all_tokens = weighted_tokens + stemmed_tokens
+        
+        # Just store raw token counts
+        result[doc_name] = dict(Counter(all_tokens))
+    
+    return result
 
 class InvertedIndex:
     """
@@ -87,16 +135,33 @@ class InvertedIndex:
     def tokenize_documents(self) -> dict:
         """
         Tokenizes all documents in the ZIP file and calculates proper term frequencies.
+        Uses multiprocessing for faster processing.
         Returns a dictionary mapping document names to their term frequencies.
         """
-        res = {}
-        for doc_name, doc_text in self.documents.items():
-            self.total_documents += 1
-            # Get raw token counts
-            token_counts = self.tokenize(doc_text)
-            # Calculate normalized term frequencies
-            res[doc_name] = self.calculate_tfs(token_counts)
-        return res
+        # Determine optimal number of processes
+        num_cores = max(1, os.cpu_count() - 1)  # Leave one core free for system
+        
+        # Split documents into chunks for parallel processing
+        chunk_size = max(1, len(self.documents) // num_cores)
+        chunks = [dict(list(self.documents.items())[i:i + chunk_size]) 
+                 for i in range(0, len(self.documents), chunk_size)]
+        
+        # Process chunks in parallel to get raw token counts
+        with multiprocessing.Pool(processes=num_cores) as pool:
+            raw_results = pool.map(partial(tokenize_chunk, stemmer=self.stemmer), chunks)
+        
+        # Combine results from all processes
+        token_counts = {}
+        for chunk_result in raw_results:
+            token_counts.update(chunk_result)
+        
+        # Now calculate term frequencies from the complete token counts
+        term_frequencies = {}
+        for doc_name, counts in token_counts.items():
+            term_frequencies[doc_name] = self.calculate_tfs(counts)
+        
+        self.total_documents += len(self.documents)
+        return term_frequencies
 
     def calculate_tfs(self, tokens: dict) -> dict:
         """

@@ -50,10 +50,6 @@ class FileOpener:
     def merge_partial_indexes(self, partial_index_count: int):
         """Delegate to index manager to merge partial indexes"""
         return self.index_manager.merge_partial_indexes(partial_index_count)
-    
-    def write_tfidf_index(self, total_documents: int):
-        """Delegate to index manager to write TF-IDF index"""
-        return self.index_manager.write_tfidf_index(total_documents)
 
     def close(self):
         """Close the progress bar when done processing all files"""
