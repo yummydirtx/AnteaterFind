@@ -1,5 +1,5 @@
 #from file import FileOpener
-from index import InvertedIndex
+from .index import InvertedIndex
 import os
 import sys
 

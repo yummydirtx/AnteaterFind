@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import Dict, List, Tuple, Any
 import ijson
 from tqdm import tqdm
-from posting import Posting
+from .posting import Posting
 
 class IndexManager:
     def __init__(self):
