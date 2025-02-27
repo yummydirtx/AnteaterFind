@@ -1,4 +1,4 @@
-from search import Search
+from Search.search import Search
 import sys
 import time
 
