@@ -1,4 +1,4 @@
-from InvertedIndex.file import FileOpener
+from file import FileOpener
 from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning, XMLParsedAsHTMLWarning
 import warnings
 import re

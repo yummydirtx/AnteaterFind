@@ -1,7 +1,7 @@
 import zipfile
 from tqdm import tqdm
-from InvertedIndex.zip_handler import ZipHandler
-from InvertedIndex.index_manager import IndexManager
+from zip_handler import ZipHandler
+from index_manager import IndexManager
 
 class FileOpener:
     def __init__(self, zipPath: str):

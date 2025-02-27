@@ -1,5 +1,5 @@
 #from file import FileOpener
-from InvertedIndex.index import InvertedIndex
+from index import InvertedIndex
 import os
 import sys
 
@@ -14,7 +14,7 @@ def generate_m1_report(path: str):
         - Number of unique words
         - Total size of index on disk
     """
-    index = InvertedIndex(path) #test
+    index = InvertedIndex(path)
     numDocuments = index.total_documents
     numUniqueTokens = index.unique_tokens()
 
@@ -25,6 +25,16 @@ def generate_m1_report(path: str):
         url_map_size = os.path.getsize("urls.json") / 1024  # Convert bytes to KB
         total_size = index_size + url_map_size
         f.write(f"The total size (in KB) of index on disk: {total_size:.2f}\n")
+
+def generate_index(path: str):
+    """
+    Generates an inverted index from the document collection, without creating a report.
+    Args:
+        path : Path to the document collection
+    Creates:
+        index.json, urls.json, and token_positions.json
+    """
+    InvertedIndex(path)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
