@@ -277,10 +277,18 @@ class Search:
         for term in query_terms:
             postings = self.get_postings_for_term(term)
             
+            # Calculate IDF for this term
+            df = len(postings)
+            if df > 0:
+                idf = math.log10(self.total_documents / df)
+            else:
+                idf = 0
+                
             for posting in postings:
                 doc_id = posting['doc_id']
                 if doc_id in doc_ids:
-                    doc_vectors[doc_id][term] = posting['tf']
+                    # Store TF-IDF instead of just TF
+                    doc_vectors[doc_id][term] = posting['tf'] * idf
                     
         return doc_vectors
 
@@ -322,7 +330,7 @@ class Search:
             use_ranking: Whether to rank results by relevance (default: True)
             
         Returns:
-            List of (doc_id, url, score) tuples for matching documents
+            List of (doc_id, url, score, tf_idf_info) tuples for matching documents
         """
         # Process query
         query_terms = self.tokenize_query(query)
@@ -349,31 +357,42 @@ class Search:
             scores = []
             for doc_id, doc_vector in doc_vectors.items():
                 similarity = self.cosine_similarity(query_vector, doc_vector)
-                scores.append((doc_id, similarity))
+                # Store the doc_vector alongside the score for later display
+                scores.append((doc_id, similarity, doc_vector))
                 
             # Sort by score in descending order
             scores.sort(key=lambda x: x[1], reverse=True)
             
-            # Format results
-            results = [(doc_id, self.urls[doc_id], score) for doc_id, score in scores]
+            # Format results with TF-IDF information
+            results = [(doc_id, self.urls[doc_id], score, doc_vector) 
+                      for doc_id, score, doc_vector in scores]
         else:
             # Just return matching documents without scoring
-            results = [(doc_id, self.urls[doc_id], 1.0) for doc_id in matching_doc_ids]
+            # For non-ranked results, include empty TF-IDF info
+            results = [(doc_id, self.urls[doc_id], 1.0, {}) for doc_id in matching_doc_ids]
             
         return results
 
     def print_results(self, results, limit=10):
         """
-        Print search results in a formatted manner.
+        Print search results in a formatted manner, including TF-IDF values.
         
         Args:
-            results: List of (doc_id, url, score) tuples
+            results: List of (doc_id, url, score, tf_idf_info) tuples
             limit: Maximum number of results to display (default: 10)
         """
         print(f"Found {len(results)} matching documents.")
         
-        for i, (doc_id, url, score) in enumerate(results[:limit]):
+        for i, (doc_id, url, score, tf_idf_info) in enumerate(results[:limit]):
             print(f"{i+1}. [Score: {score:.4f}] Document {doc_id}: {url}")
+            
+            # Display TF-IDF information for the terms
+            if tf_idf_info:
+                print("  TF-IDF values:")
+                # Sort terms by TF-IDF value for better readability
+                sorted_terms = sorted(tf_idf_info.items(), key=lambda x: x[1], reverse=True)
+                for term, tf_idf in sorted_terms:
+                    print(f"    - {term}: {tf_idf:.4f}")
             
         if len(results) > limit:
             print(f"... and {len(results) - limit} more results.")
