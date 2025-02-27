@@ -70,12 +70,16 @@ class InvertedIndex:
 
     def tokenize_documents(self) -> dict:
         """
-        Tokenizes all documents in the ZIP file.
+        Tokenizes all documents in the ZIP file and calculates proper term frequencies.
+        Returns a dictionary mapping document names to their term frequencies.
         """
         res = {}
         for doc_name, doc_text in self.documents.items():
             self.total_documents += 1
-            res[doc_name] = self.tokenize(doc_text)
+            # Get raw token counts
+            token_counts = self.tokenize(doc_text)
+            # Calculate normalized term frequencies
+            res[doc_name] = self.calculate_tfs(token_counts)
         return res
 
     def calculate_tfs(self, tokens: dict) -> dict:
