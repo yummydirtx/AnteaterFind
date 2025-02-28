@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import SearchIcon from '@mui/icons-material/Search';
+import Button from '@mui/material/Button';
 
 function App() {
   return (
@@ -36,6 +37,13 @@ function App() {
               startAdornment: (<SearchIcon sx={{marginRight: '10px'}} />)
             }
           }} />
+          <Button variant="contained" sx={{ 
+            borderRadius: '20px',
+            width: '150px',
+          }}>
+            Search
+          </
+          Button>
         </Stack>
       </Box>
     </ThemeProvider>
