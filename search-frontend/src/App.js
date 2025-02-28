@@ -16,7 +16,11 @@ function App() {
         p: 2,
       })
       }>
-        <Stack direction="row" spacing={2} sx={{ width: '80%', margin: '0 auto' }}>
+        <Box component={'img'} src="anteaterfind.png" alt="Anteater Find" sx={{ width: '30%', 
+          margin: '0 auto', 
+          marginBottom: '10px',
+          marginTop: '50px' }} />
+        <Stack direction="row" spacing={2} sx={{ width: '60%', margin: '0 auto' }}>
           <TextField 
           fullWidth
           id="outlined-basic"
@@ -29,7 +33,7 @@ function App() {
           }}
           slotProps={{
             input: {
-              startAdornment: (<SearchIcon />)
+              startAdornment: (<SearchIcon sx={{marginRight: '10px'}} />)
             }
           }} />
         </Stack>
