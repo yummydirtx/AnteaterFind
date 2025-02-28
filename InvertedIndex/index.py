@@ -13,6 +13,26 @@ import os
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
+def weighted_tags(soup) -> list:
+        """
+        Extracts text from specific html tags (h1, h2, h3, b, strong) and applies weight
+        Args:
+             soup: BeautifulSoup object that represents the parsed HTML text
+        Returns:
+            List of tokens extracted from weighted tags, where token is being multiplied based on
+            weight of the tag.
+        """
+
+        tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
+        weighted_tokens = []
+        #https://pytutorial.com/beautifulsoup-how-to-get-text-inside-tag-or-tgs/
+        for tag, weight in tag_weights.items():
+            for word in soup.find_all(tag):
+                text = word.get_text()
+                tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
+                weighted_tokens.extend([token for token in tokens for _ in range(int(weight))])
+        return weighted_tokens
+
 # Worker function for multiprocessing
 def tokenize_chunk(chunk, stemmer):
     """
@@ -41,13 +61,8 @@ def tokenize_chunk(chunk, stemmer):
         tokens = [token.lower() for token in tokens]
         
         # Extract weighted tokens
-        weighted_tokens = []
-        tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
-        for tag, weight in tag_weights.items():
-            for word in soup.find_all(tag):
-                text = word.get_text()
-                tokens_in_tag = re.findall(r'\b[A-Za-z0-9]+\b', text)
-                weighted_tokens.extend([token for token in tokens_in_tag for _ in range(int(weight))])
+        weighted_tokens = weighted_tags(soup)
+        weighted_tokens = [token.lower() for token in weighted_tokens]
         
         # Stem tokens
         stemmed_tokens = [stemmer.stem(token) for token in tokens]
@@ -93,57 +108,6 @@ class InvertedIndex:
             self.file_opener.close()
             if self.partial_index_count > 0:
                 self.file_opener.merge_partial_indexes(self.partial_index_count)
-    def weighted_tags(self, soup) -> list:
-        """
-        Extracts text from specific html tags (h1, h2, h3, b, strong) and applies weight
-        Args:
-             soup: BeautifulSoup object that represents the parsed HTML text
-        Returns:
-            List of tokens extracted from weighted tags, where token is being multiplied based on
-            weight of the tag.
-        """
-
-        tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
-        weighted_tokens = []
-        #https://pytutorial.com/beautifulsoup-how-to-get-text-inside-tag-or-tgs/
-        for tag, weight in tag_weights.items():
-            for word in soup.find_all(tag):
-                text = word.get_text()
-                tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
-                weighted_tokens.extend([token for token in tokens for _ in range(int(weight))])
-        return weighted_tokens
-
-    def tokenize(self, text: str) -> dict:
-        """
-        Tokenizes HTML text using NLTK's word_tokenize and returns the frequency of each stemmed word.
-        Args:
-             text: raw HTML text
-        Returns:
-            Dictionary that maps stemmed tokens to their term frequencies. This also includes
-            their weighted tags
-        """
-
-        # Parse HTML and extract text
-        soup = BeautifulSoup(text, features='lxml')
-        warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
-        warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
-        text = soup.get_text()
-
-        # Create tokenizer that only captures alphanumeric
-        tokenizer = RegexpTokenizer(r'[A-Za-z0-9]+')
-        
-        # Tokenize
-        tokens = tokenizer.tokenize(text)
-
-        #weighted token
-        weighted_tokens = self.weighted_tags(soup)
-
-        # Stem tokens
-        stemmed_tokens = [self.stemmer.stem(token) for token in tokens]
-
-        all_tokens = weighted_tokens + stemmed_tokens
-        
-        return dict(Counter(all_tokens))
 
     def tokenize_documents(self) -> dict:
         """
