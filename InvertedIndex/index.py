@@ -73,9 +73,9 @@ class InvertedIndex:
         self.partial_index_count = 0
         if zipPath is not None:
             self.file_opener = FileOpener(zipPath)
-            self.load_zip(zipPath)
+            self.load_zip()
 
-    def load_zip(self, zipPath: str):
+    def load_zip(self):
         """
         Processes documents from a ZIP file in batches to manage memory usage.
         Creates partial indexes for each batch.
@@ -92,8 +92,16 @@ class InvertedIndex:
             self.file_opener.close()
             if self.partial_index_count > 0:
                 self.file_opener.merge_partial_indexes(self.partial_index_count)
-    def weighted_tags(self, soup):
-        """Gets text from within tags and applies weight"""
+    def weighted_tags(self, soup) -> list:
+        """
+        Extracts text from specific html tags (h1, h2, h3, b, strong) and applies weight
+        Args:
+             soup: BeautifulSoup object that represents the parsed HTML text
+        Returns:
+            List of tokens extracted from weighted tags, where token is being multiplied based on
+            weight of the tag.
+        """
+
         tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
         weighted_tokens = []
         #https://pytutorial.com/beautifulsoup-how-to-get-text-inside-tag-or-tgs/
@@ -106,9 +114,14 @@ class InvertedIndex:
 
     def tokenize(self, text: str) -> dict:
         """
-        Tokenizes HTML text using NLTK's word_tokenize and returns
-        the frequency of each stemmed word.
+        Tokenizes HTML text using NLTK's word_tokenize and returns the frequency of each stemmed word.
+        Args:
+             text: raw HTML text
+        Returns:
+            Dictionary that maps stemmed tokens to their term frequencies. This also includes
+            their weighted tags
         """
+
         # Parse HTML and extract text
         soup = BeautifulSoup(text, features='lxml')
         warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
@@ -134,9 +147,11 @@ class InvertedIndex:
     def tokenize_documents(self) -> dict:
         """
         Tokenizes all documents in the ZIP file and calculates proper term frequencies.
-        Uses multiprocessing for faster processing.
-        Returns a dictionary mapping document names to their term frequencies.
+        Uses multiprocessing for faster processing by dividing documents into chunks.
+        Returns:
+            dict: a dictionary mapping document names to their term frequencies.
         """
+
         # Determine optimal number of processes
         num_cores = max(1, os.cpu_count() - 1)  # Leave one core free for system
         
@@ -167,6 +182,10 @@ class InvertedIndex:
         Calculates the term frequency of all tokens in a document.
         TF = number of times the token appears in the document / total number
         of tokens in the document.
+        Args:
+            tokens (dict): Dictionary mapping of token and its raw frequencies
+        Returns:
+            dict: Dictionary mapping tokens to their normalized term frequencies.
         """
         total_tokens = sum(tokens.values())
         return {token: count / total_tokens for token, count in tokens.items()}
@@ -175,6 +194,10 @@ class InvertedIndex:
     def unique_tokens(self):
         """
         Count the unique tokens in the index.
+        First tries token_position.json for quicker access
+        if missing tries counting from index.json
+        Returns:
+            int: Number of unique tokens in the index
         """
         try:
             # First try to use token positions file for a quick count
