@@ -1,8 +1,10 @@
 import json
 import math
+import time
 from cache import LRUCache
 from nltk.stem import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
+from flask import Response
 
 class Search:
     """
@@ -352,6 +354,26 @@ class Search:
             results = [(doc_id, self.urls[doc_id], 1.0, {}) for doc_id in matching_doc_ids]
             
         return results
+    
+    def get_formatted_results(self, query, jsonify, limit=5) -> Response:
+        """
+        Get search results in a formatted manner for display.
+        
+        Args:
+            query: The search query string
+            limit: Maximum number of results to display (default: 5)
+        """
+        start_time = time.time()
+        results = self.search(query)
+        query_time = time.time() - start_time
+        formatted_results = [ {
+            "doc_id": doc_id,
+            "url": url,
+            "score": score,
+            "tf_idf_info": tf_idf_info
+        } for doc_id, url, score, tf_idf_info in results[:limit]
+        ]
+        return jsonify({"results": formatted_results, "total": len(results), "query_time": query_time})
 
     def print_results(self, results, limit=10):
         """
