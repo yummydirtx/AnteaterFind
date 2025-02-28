@@ -1,24 +1,40 @@
-import logo from './logo.svg';
-import './App.css';
+import TextField from '@mui/material/TextField';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import SearchIcon from '@mui/icons-material/Search';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={createTheme({ palette: { mode: 'dark' } })}>
+      <CssBaseline />
+      <Box sx={(theme) => ({
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        textAlign: 'center',
+        p: 2,
+      })
+      }>
+        <Stack direction="row" spacing={2} sx={{ width: '80%', margin: '0 auto' }}>
+          <TextField 
+          fullWidth
+          id="outlined-basic"
+          label="Search"
+          variant="outlined"
+          sx={{ 
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '20px'
+            }
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (<SearchIcon />)
+            }
+          }} />
+        </Stack>
+      </Box>
+    </ThemeProvider>
   );
 }
 
