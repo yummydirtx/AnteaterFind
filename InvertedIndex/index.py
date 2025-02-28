@@ -38,6 +38,7 @@ def tokenize_chunk(chunk, stemmer):
         
         # Tokenize
         tokens = tokenizer.tokenize(text)
+        tokens = [token.lower() for token in tokens]
         
         # Extract weighted tokens
         weighted_tokens = []
