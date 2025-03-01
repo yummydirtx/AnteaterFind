@@ -13,6 +13,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import Collapse from '@mui/material/Collapse'; // Add this import
 
 function App() {
   const [query, setQuery] = useState('');
@@ -205,35 +206,66 @@ function App() {
                     <Button 
                       onClick={() => toggleExpand(index)} 
                       size="small" 
-                      sx={{ minWidth: '32px', height: '32px', p: 0 }}
+                      sx={{ 
+                        minWidth: '32px', 
+                        height: '32px', 
+                        p: 0,
+                        transition: 'transform 0.3s ease', 
+                        transform: expandedResults[index] ? 'rotate(180deg)' : 'rotate(0deg)', // Animate the rotation
+                      }}
                     >
-                      {expandedResults[index] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      <ExpandMoreIcon />
                     </Button>
                   </Box>
                   <Typography color="text.secondary">
                     Relevance Score: {result.score.toFixed(4)}
                   </Typography>
                   
-                  {expandedResults[index] && result.tf_idf_info && (
-                    <Box sx={{ mt: 2, backgroundColor: 'rgba(0,0,0,0.2)', p: 1.5, borderRadius: '8px' }}>
-                      <Typography variant="subtitle2" gutterBottom>TF-IDF Information:</Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {Object.entries(result.tf_idf_info)
-                          .sort((a, b) => b[1] - a[1])
-                          .map(([term, value], i) => (
-                            <Chip 
-                              key={i} 
-                              label={`${term}: ${value.toFixed(4)}`} 
-                              size="small" 
-                              sx={{ 
-                                backgroundColor: `rgba(79, 195, 247, ${Math.min(value * 0.5, 0.8)})`,
-                                '& .MuiChip-label': { fontSize: '0.7rem' }
-                              }}
-                            />
-                          ))}
+                  <Collapse in={expandedResults[index]} timeout={400}>
+                    {result.tf_idf_info && (
+                      <Box 
+                        sx={{ 
+                          mt: 2, 
+                          backgroundColor: 'rgba(0,0,0,0.2)', 
+                          p: 1.5, 
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Typography variant="subtitle2" gutterBottom sx={{
+                          animation: expandedResults[index] ? 'fadeIn 0.5s ease' : 'none',
+                        }}>
+                          TF-IDF Information:
+                        </Typography>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          flexWrap: 'wrap', 
+                          gap: 1,
+                          '@keyframes slideIn': {
+                            from: { opacity: 0, transform: 'translateY(-10px)' },
+                            to: { opacity: 1, transform: 'translateY(0)' }
+                          }
+                        }}>
+                          {Object.entries(result.tf_idf_info)
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([term, value], i) => (
+                              <Chip 
+                                key={i} 
+                                label={`${term}: ${value.toFixed(4)}`} 
+                                size="small" 
+                                sx={{ 
+                                  backgroundColor: `rgba(79, 195, 247, ${Math.min(value * 0.5, 0.8)})`,
+                                  '& .MuiChip-label': { fontSize: '0.7rem' },
+                                  animation: 'slideIn 0.4s ease',
+                                  animationDelay: `${i * 0.05}s`, // Staggered animation for each chip
+                                  animationFillMode: 'both',
+                                }}
+                              />
+                            ))}
+                        </Box>
                       </Box>
-                    </Box>
-                  )}
+                    )}
+                  </Collapse>
                 </Box>
               ))}
             </>
