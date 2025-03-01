@@ -3,7 +3,8 @@ from search import Search
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/search": {"origins": "*"}})
+# Apply CORS to the entire app with default options
+CORS(app)
 
 # Initialize search engine
 search_engine = Search()
