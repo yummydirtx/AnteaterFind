@@ -30,6 +30,13 @@ function App() {
 
     setLoading(false);
   };
+  
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  };
+  
   return (
     <ThemeProvider theme={createTheme({ palette: { mode: 'dark' } })}>
       <CssBaseline />
@@ -59,6 +66,7 @@ function App() {
           variant="outlined"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           sx={{ 
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px'
