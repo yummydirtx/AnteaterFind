@@ -9,11 +9,10 @@ import React, { useState } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
-import Collapse from '@mui/material/Collapse'; // Add this import
+import Collapse from '@mui/material/Collapse';
 
 function App() {
   const [query, setQuery] = useState('');
