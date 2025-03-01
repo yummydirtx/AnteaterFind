@@ -12,6 +12,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -20,6 +21,8 @@ function App() {
   const [queryTime, setQueryTime] = useState(null);
   const [totalResults, setTotalResults] = useState(0);
   const [expandedResults, setExpandedResults] = useState({});
+  const [hasSearched, setHasSearched] = useState(false);
+  const [lastSearchedQuery, setLastSearchedQuery] = useState('');
 
   const toggleExpand = (index) => {
     setExpandedResults(prev => ({
@@ -34,6 +37,8 @@ function App() {
     }
     setLoading(true);
     setExpandedResults({});
+    setHasSearched(true);
+    setLastSearchedQuery(query);
 
     try {
       const response = await fetch(`http://127.0.0.1:5000/search?q=${encodeURIComponent(query)}`);
@@ -100,6 +105,27 @@ function App() {
           </Button>
         </Stack>
         {loading && <CircularProgress sx={{ marginTop: 2 }} />}
+        
+        {!loading && hasSearched && results.length === 0 && (
+          <Box sx={{ 
+            width: '60%', 
+            margin: '40px auto',
+            padding: 3,
+            borderRadius: '10px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2
+          }}>
+            <SentimentDissatisfiedIcon sx={{ fontSize: 48, color: '#888' }} />
+            <Typography variant="h6" color="text.secondary">
+              No results found for "{lastSearchedQuery}"
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Try using different keywords or simplifying your search query
+            </Typography>
+          </Box>
+        )}
         
         {!loading && results.length > 0 && (
           <Box sx={{ width: '60%', margin: '20px auto 0', textAlign: 'left' }}>
