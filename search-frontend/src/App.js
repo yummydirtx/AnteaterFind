@@ -44,10 +44,7 @@ function App() {
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
         width: '100%',
-        backgroundImage:
-          theme.palette.mode === 'light'
-            ? 'linear-gradient(180deg, #CEE5FD, #FFF)'
-            : `linear-gradient(#02294F, ${alpha('#090E10', 0.0)})`,
+        backgroundImage: `linear-gradient(#02294F, ${alpha('#090E10', 0.0)})`,
         backgroundSize: '100% 200px',
         backgroundRepeat: 'no-repeat',
         textAlign: 'center',
