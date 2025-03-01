@@ -76,6 +76,10 @@ function App() {
         overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
+        '@keyframes slideUp': {
+          from: { opacity: 0, transform: 'translateY(50px)' },
+          to: { opacity: 1, transform: 'translateY(0)' }
+        },
       })
       }>
         <Box 
@@ -179,7 +183,13 @@ function App() {
           
           {!loading && results.length > 0 && (
             <>
-              <Box sx={{ width: '60%', textAlign: 'left', marginBottom: '20px' }}>
+              <Box sx={{ 
+                width: '60%', 
+                textAlign: 'left', 
+                marginBottom: '20px',
+                animation: 'slideUp 0.5s ease',
+                animationFillMode: 'both',
+              }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Found {totalResults} documents in {queryTime ? queryTime.toFixed(4) : '0'} seconds
                 </Typography>
@@ -192,7 +202,12 @@ function App() {
                   padding: 2, 
                   backgroundColor: '#222', 
                   borderRadius: '10px',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  animation: 'slideUp 0.6s ease',
+                  animationFillMode: 'both',
+                  animationDelay: `${index * 0.12}s`, // Staggered delay based on result index
+                  opacity: 0, // Start with opacity 0
+                  transform: 'translateY(50px)', // Start from below
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ 
