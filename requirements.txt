@@ -1,0 +1,6 @@
+ijson
+nltk
+bs4
+tqdm
+flask
+flask_cors
