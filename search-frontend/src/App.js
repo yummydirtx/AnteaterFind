@@ -7,7 +7,12 @@ import { alpha } from '@mui/material';
 
 import { SearchBar, ResultSummary, NoResults, SearchResult } from './components';
 
+/**
+ * Main application component that manages the search interface
+ * Handles state management and data fetching for the search functionality
+ */
 function App() {
+  // State for search query and results
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,6 +22,10 @@ function App() {
   const [hasSearched, setHasSearched] = useState(false);
   const [lastSearchedQuery, setLastSearchedQuery] = useState('');
 
+  /**
+   * Toggles the expanded/collapsed state of a search result
+   * @param {number} index - The index of the result to toggle
+   */
   const toggleExpand = (index) => {
     setExpandedResults(prev => ({
       ...prev,
@@ -24,6 +33,10 @@ function App() {
     }));
   };
 
+  /**
+   * Performs search by calling the backend API
+   * Updates results state with the search response data
+   */
   const handleSearch = async () => {
     if (!query) {
       return;
@@ -69,6 +82,7 @@ function App() {
         },
       })
       }>
+        {/* Search interface component */}
         <SearchBar 
           query={query} 
           setQuery={setQuery} 
@@ -76,7 +90,7 @@ function App() {
           hasSearched={hasSearched} 
         />
         
-        {/* Content container that appears below the search bar */}
+        {/* Results container - only visible after search */}
         <Box 
           sx={{ 
             width: '100%', 
@@ -90,16 +104,20 @@ function App() {
             zIndex: 5,
           }}
         >
+          {/* Loading indicator */}
           {loading && <CircularProgress />}
           
+          {/* No results message */}
           {!loading && hasSearched && results.length === 0 && (
             <NoResults query={lastSearchedQuery} />
           )}
           
+          {/* Search results section */}
           {!loading && results.length > 0 && (
             <>
               <ResultSummary totalResults={totalResults} queryTime={queryTime} />
               
+              {/* Map through results array to display each result */}
               {results.map((result, index) => (
                 <SearchResult 
                   key={index}
