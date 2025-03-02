@@ -4,6 +4,8 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import SearchIcon from '@mui/icons-material/Search';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 /**
  * SearchBar component - Displays the search logo and input field
@@ -15,6 +17,9 @@ import SearchIcon from '@mui/icons-material/Search';
  * @param {boolean} props.hasSearched - Whether a search has been performed
  */
 const SearchBar = ({ query, setQuery, handleSearch, hasSearched }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   /**
    * Handles Enter key press to trigger search
    * @param {Object} event - Keyboard event
@@ -35,18 +40,20 @@ const SearchBar = ({ query, setQuery, handleSearch, hasSearched }) => {
         flexDirection: 'column',
         alignItems: 'center',
         // Adjust position based on search state
-        marginTop: hasSearched ? '20px' : '30vh',
+        marginTop: hasSearched ? '20px' : isMobile ? '15vh' : '30vh',
         transition: 'all 0.6s cubic-bezier(0.33, 1, 0.68, 1)',
         zIndex: 10,
       }}
     >
-      {/* Logo - resizes when search is performed */}
+      {/* Logo - resizes when search is performed and is larger on mobile */}
       <Box 
         component={'img'} 
         src="anteaterfind.png" 
         alt="Anteater Find" 
         sx={{ 
-          width: hasSearched ? '20%' : '30%', 
+          width: hasSearched 
+            ? isMobile ? '40%' : '20%' 
+            : isMobile ? '50%' : '30%', 
           marginBottom: '20px',
           transition: 'all 0.6s cubic-bezier(0.33, 1, 0.68, 1)',
         }} 
@@ -57,7 +64,7 @@ const SearchBar = ({ query, setQuery, handleSearch, hasSearched }) => {
         direction="row" 
         spacing={2} 
         sx={{ 
-          width: '50%',
+          width: isMobile ? '90%' : '50%',
           transition: 'all 0.6s cubic-bezier(0.33, 1, 0.68, 1)',
         }}
       >
@@ -82,17 +89,19 @@ const SearchBar = ({ query, setQuery, handleSearch, hasSearched }) => {
           }} 
         />
 
-        {/* Search button */}
-        <Button 
-          variant="contained" 
-          sx={{ 
-            borderRadius: '20px',
-            width: '150px',
-          }}
-          onClick={handleSearch}
-        >
-          Search
-        </Button>
+        {/* Search button - hidden on mobile */}
+        {!isMobile && (
+          <Button 
+            variant="contained" 
+            sx={{ 
+              borderRadius: '20px',
+              width: '150px',
+            }}
+            onClick={handleSearch}
+          >
+            Search
+          </Button>
+        )}
       </Stack>
     </Box>
   );

@@ -5,6 +5,8 @@ import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Chip from '@mui/material/Chip';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 /**
  * SearchResult component - Displays a single search result with expandable details
@@ -16,9 +18,12 @@ import Chip from '@mui/material/Chip';
  * @param {Function} props.onToggleExpand - Function to toggle expanded state
  */
 const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <Box sx={{ 
-      width: '60%', 
+      width: isMobile ? '90%' : '60%', 
       marginBottom: 2, 
       padding: 2, 
       backgroundColor: '#222', 
@@ -33,11 +38,14 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
     }}>
       {/* URL and expand button header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* Result URL as a link */}
+        {/* Result URL as a link with mobile-responsive truncation */}
         <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ 
           color: '#4fc3f7', 
           textDecoration: 'none',
-          flex: 1
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}>
           {result.url}
         </a>

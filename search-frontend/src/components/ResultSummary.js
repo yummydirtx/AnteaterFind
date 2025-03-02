@@ -1,6 +1,8 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 /**
  * ResultSummary component - Displays metrics about search results
@@ -11,9 +13,12 @@ import Typography from '@mui/material/Typography';
  * @param {number} props.queryTime - Time taken to execute the search query in seconds
  */
 const ResultSummary = ({ totalResults, queryTime }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   return (
     <Box sx={{ 
-      width: '60%', 
+      width: isMobile ? '90%' : '60%', 
       textAlign: 'left', 
       marginBottom: '20px',
       // Animation for smooth entry
