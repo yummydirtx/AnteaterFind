@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from search import Search
+from Search import Search
 from flask_cors import CORS
 
 app = Flask(__name__)
