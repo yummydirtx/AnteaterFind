@@ -1,8 +1,7 @@
 import time
-from ranking import Ranking
+from query import Ranking, QueryProcessor
 from flask import Response
-from index_reader import IndexReader
-from query_processor import QueryProcessor
+from indexing import IndexReader
 
 class Search:
     """

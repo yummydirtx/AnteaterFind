@@ -1,6 +1,12 @@
 import math
 
 class Ranking:
+    """
+    The Ranking class provides functionality for scoring and ranking search results.
+    
+    This class works with the IndexReader to retrieve document information and
+    compute similarity scores between queries and documents.
+    """
     def __init__(self, total_documents, index_reader):
         self.total_documents = total_documents
         self.index_reader = index_reader

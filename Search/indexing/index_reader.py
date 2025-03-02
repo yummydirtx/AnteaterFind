@@ -1,5 +1,5 @@
 import json
-from cache import LRUCache
+from .cache import LRUCache
 
 class IndexReader:
     """
