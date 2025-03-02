@@ -1,6 +1,7 @@
-from search import Search
 import sys
 import time
+
+from search import Search
 
 def main():
     """
