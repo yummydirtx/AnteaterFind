@@ -1,9 +1,9 @@
 import math
 
 class Ranking:
-    def __init__(self, total_documents, search):
+    def __init__(self, total_documents, index_reader):
         self.total_documents = total_documents
-        self.search = search
+        self.index_reader = index_reader
 
     def calculate_query_vector(self, query_terms):
         """
@@ -25,7 +25,7 @@ class Ranking:
         # Calculate TF-IDF for each query term
         query_vector = {}
         for term, tf in query_tf.items():
-            df = self.search.get_document_frequency(term)
+            df = self.index_reader.get_document_frequency(term)
             if df > 0:
                 # IDF = log(total_documents / document_frequency)
                 idf = math.log10(self.total_documents / df)
@@ -49,7 +49,7 @@ class Ranking:
         doc_vectors = {doc_id: {} for doc_id in doc_ids}
 
         for term in query_terms:
-            postings = self.search.get_postings_for_term(term)
+            postings = self.index_reader.get_postings_for_term(term)
 
             # Calculate IDF for this term
             df = len(postings)
