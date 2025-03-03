@@ -2,7 +2,7 @@ import zipfile
 from tqdm import tqdm
 from .zip_handler import ZipHandler
 from .index_manager import IndexManager
-
+from urllib.parse import urldefrag
 class FileOpener:
     def __init__(self, zipPath: str):
         """Initialize file opener with zip path"""
@@ -14,6 +14,11 @@ class FileOpener:
         with zipfile.ZipFile(self.zipPath, 'r') as zipfolder:
             self.total_files = len([f for f in zipfolder.namelist() if f.endswith('.json')])
             self.pbar = tqdm(total=self.total_files, desc="Processing files")
+
+    def normalize_url(self, url):
+        """Remove fragment"""
+        #so we dont get the #content type of website
+        return urldefrag(url)[0]
 
     def read_zip(self, count: int = None) -> dict:
         """
@@ -35,9 +40,10 @@ class FileOpener:
                 for url, content in ZipHandler.parse_json_file(zipfolder, file_name):
                     if count is not None and files_processed >= count:
                         break
-                    if url not in self.seenUrls:
-                        self.seenUrls.add(url)
-                        url_to_content[url] = content
+                    normalized_url = self.normalize_url(url)
+                    if normalized_url not in self.seenUrls:
+                        self.seenUrls.add(normalized_url)
+                        url_to_content[normalized_url] = content
                         files_processed += 1
                         self.pbar.update(1)
 
