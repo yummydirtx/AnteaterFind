@@ -1,13 +1,22 @@
 from flask import Flask, request, jsonify
 from Search import Search
 from flask_cors import CORS
+import sys
+import os
 
 app = Flask(__name__)
 # Configure CORS more explicitly to handle both localhost and 127.0.0.1
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
 
 # Initialize search engine
-search_engine = Search()
+if len(sys.argv) > 2:
+        zip_path = sys.argv[1]
+        api_key = sys.argv[2]
+        os.environ["OPENAI_API_KEY"] = api_key
+        search_engine = Search(zip_path)
+else:
+    api_key = None
+    search_engine = Search()
 
 # Add a custom after_request handler to ensure CORS headers are present
 @app.after_request
@@ -23,6 +32,13 @@ def search():
     if not query:
         return jsonify({'error': 'No query provided'}), 400
     return search_engine.get_formatted_results(query, jsonify)
+
+@app.route('/summary', methods=['GET'])
+def summary():
+    site_id = request.args.get('id', '')
+    if not site_id:
+        return jsonify({'error': 'No URL provided'}), 400
+    return search_engine.get_summary(site_id, api_key, jsonify)
 
 def main():
     app.run(host='0.0.0.0', port=5000, debug=True)  # Changed host to 0.0.0.0 to listen on all interfaces

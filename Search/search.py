@@ -1,6 +1,6 @@
 import time
 from flask import Response
-
+from .summarizer import summarize
 from .query import Ranking, QueryProcessor
 from .indexing import IndexReader
 
@@ -9,7 +9,7 @@ class Search:
     Search component that handles retrieval of documents based on queries.
     Uses a disk-based approach with O(1) token lookups.
     """
-    def __init__(self, index_path='index.json', urls_path='urls.json', 
+    def __init__(self, zip_path='zips/developer.zip', index_path='index.json', urls_path='urls.json', 
                  positions_path='token_positions.json', cache_size=100):
         """
         Initialize the search component without loading the entire index.
@@ -21,7 +21,7 @@ class Search:
             cache_size: Number of terms to cache in memory
         """
         # Initialize components
-        self.index_reader = IndexReader(index_path, urls_path, positions_path, cache_size)
+        self.index_reader = IndexReader(zip_path, index_path, urls_path, positions_path, cache_size)
         self.query_processor = QueryProcessor(self.index_reader)
         self.ranking = Ranking(self.index_reader.total_documents, self.index_reader)
 
@@ -126,3 +126,19 @@ class Search:
             
         if len(results) > limit:
             print(f"... and {len(results) - limit} more results.")
+
+    def get_summary(self, site_id, api_key, jsonify):
+        """
+        Get a summary of the indexed site using the OpenAI API.
+
+        Args:
+            site_id: The document ID of the site to summarize
+            api_key: The OpenAI API key for authentication
+            jsonify: Function to jsonify the response
+        """
+        file_content = self.index_reader.get_document_contents(site_id)
+        summary = summarize(file_content, api_key)
+        if summary:
+            return jsonify({"summary": summary})
+        else:
+            return jsonify({"error": "Failed to generate summary."})

@@ -1,11 +1,13 @@
 import json
+from bs4 import BeautifulSoup
+import zipfile
 from .cache import LRUCache
 
 class IndexReader:
     """
     Handles disk-based index reading operations with O(1) token lookups.
     """
-    def __init__(self, index_path='index.json', urls_path='urls.json', 
+    def __init__(self, zip_path='zips/developer.zip', index_path='index.json', urls_path='urls.json', 
                  positions_path='token_positions.json', cache_size=100):
         """
         Initialize the index reader component.
@@ -17,6 +19,7 @@ class IndexReader:
             cache_size: Number of terms to cache in memory
         """
         self.index_path = index_path
+        self.zip_path = zip_path
         
         # Initialize term cache
         self.cache = LRUCache(cache_size)
@@ -26,6 +29,12 @@ class IndexReader:
             url_dict = json.load(f)
             # Convert string keys to integers
             self.urls = {int(k): v for k, v in url_dict.items()}
+
+        # Load file mappings
+        with open('files.json', 'r') as f:
+            file_dict = json.load(f)
+            # Convert string keys to integers
+            self.files = {int(k): v for k, v in file_dict.items()}
             
         # Load token positions for O(1) lookup
         try:
@@ -154,3 +163,29 @@ class IndexReader:
             URL string for the document
         """
         return self.urls.get(doc_id, None)
+    
+    def get_document_contents(self, doc_id):
+        """
+        Get the contents of a document by its ID.
+        
+        Args:
+            doc_id: Document ID
+            
+        Returns:
+            Document contents as a string
+        """
+        file_name = self.files.get(int(doc_id))
+        if file_name is None:
+            return None
+        with zipfile.ZipFile(self.zip_path) as z:
+            with z.open(file_name) as f:
+                for line in f:
+                    try:
+                        json_data = json.loads(line.decode('utf-8'))
+                        if 'content' in json_data:
+                            content = json_data['content']
+                    except json.JSONDecodeError:
+                        print(f"Invalid JSON in file: {file_name}")
+        soup = BeautifulSoup(content, features='lxml')
+        return soup.get_text()
+        
