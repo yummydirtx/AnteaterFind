@@ -3,6 +3,7 @@ from tqdm import tqdm
 from .zip_handler import ZipHandler
 from .index_manager import IndexManager
 from urllib.parse import urldefrag
+
 class FileOpener:
     def __init__(self, zipPath: str):
         """Initialize file opener with zip path"""
