@@ -51,7 +51,7 @@ class FileOpener:
     
     def save_partial_index(self, batch_tfs, partial_index_count):
         """Delegate to index manager to save partial index"""
-        return self.index_manager.save_partial_index(batch_tfs, partial_index_count)
+        return self.index_manager.create_and_save_partial_index(batch_tfs, partial_index_count)
     
     def merge_partial_indexes(self, partial_index_count: int):
         """Delegate to index manager to merge partial indexes"""

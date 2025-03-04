@@ -9,7 +9,9 @@ from .posting import Posting
 class IndexManager:
     def __init__(self):
         self.url_to_id = {}  # Map URLs to numeric IDs
+        self.file_to_id = {}
         self.current_url_id = 0
+        self.current_file_id = 0
 
     def get_url_id(self, url: str) -> int:
         """Get or create a numeric ID for a URL"""
@@ -17,6 +19,19 @@ class IndexManager:
             self.url_to_id[url] = self.current_url_id
             self.current_url_id += 1
         return self.url_to_id[url]
+    
+    def get_file_id(self, file_path: str) -> int:
+        """Get or create a numeric ID for a file path"""
+        if file_path not in self.url_to_id:
+            self.url_to_id[file_path] = self.current_file_id
+            self.current_file_id += 1
+        return self.file_to_id[file_path]
+    
+    def save_file_mapping(self):
+        """Save the file path to ID mapping to a separate file"""
+        id_to_file = {str(id): file_path for file_path, id in self.file_to_id.items()}
+        with open('files.json', 'w') as f:
+            json.dump(id_to_file, f)
 
     def save_url_mapping(self):
         """Save the URL to ID mapping to a separate file"""
@@ -24,20 +39,26 @@ class IndexManager:
         with open('urls.json', 'w') as f:
             json.dump(id_to_url, f)
 
-    def create_partial_index(self, batch_tfs: Dict[str, Dict[str, int]]) -> Dict[str, List[Posting]]:
-        """Creates a partial index from batch of tfs"""
+    def create_and_save_partial_index(self, batch_tfs: Dict[str, Dict[str, int]], partial_index_count: int) -> str:
+        """
+        Creates a partial index from batch of tfs and saves it to disk
+        
+        Args:
+            batch_tfs: Dictionary mapping URLs to their token frequency dictionaries
+            partial_index_count: Counter to identify this partial index
+            
+        Returns:
+            filename: Name of the file where the partial index was saved
+        """
+        # Create partial index
         partial_index = defaultdict(list)
         for url, tokens in batch_tfs.items():
             url_id = self.get_url_id(url)
             for token, tf in tokens.items():
                 partial_index[token].append(Posting(url_id, tf))
-        return partial_index
-
-    def write_partial_index(self, partial_index: Dict[str, List[Posting]], filename: str):
-        """
-        writes partial index to file in a sorted order
-        Each partial index is sorted and contains one token entry per line.
-        """
+        
+        # Write to file
+        filename = f'partial_index_{partial_index_count}.json'
         with open(filename, 'w') as f:
             for token in sorted(partial_index.keys()):
                 entry = {
@@ -45,12 +66,7 @@ class IndexManager:
                     "postings": [vars(p) for p in partial_index[token]]
                 }
                 f.write(json.dumps(entry) + "\n")
-    
-    def save_partial_index(self, batch_tfs: Dict[str, Dict[str, int]], partial_index_count: int):
-        """saves partial index to disk"""
-        partial_index = self.create_partial_index(batch_tfs)
-        filename = f'partial_index_{partial_index_count}.json'
-        self.write_partial_index(partial_index, filename)
+        
         return filename
 
     def _initialize_file_iterators(self, files: List[str], merge_pbar):
