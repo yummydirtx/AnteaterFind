@@ -5,3 +5,4 @@ tqdm
 flask
 flask_cors
 lxml
+openai
