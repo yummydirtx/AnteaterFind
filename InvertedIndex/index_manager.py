@@ -22,8 +22,8 @@ class IndexManager:
     
     def get_file_id(self, file_path: str) -> int:
         """Get or create a numeric ID for a file path"""
-        if file_path not in self.url_to_id:
-            self.url_to_id[file_path] = self.current_file_id
+        if file_path not in self.file_to_id:
+            self.file_to_id[file_path] = self.current_file_id
             self.current_file_id += 1
         return self.file_to_id[file_path]
     
@@ -52,8 +52,9 @@ class IndexManager:
         """
         # Create partial index
         partial_index = defaultdict(list)
-        for url, tokens in batch_tfs.items():
+        for (url, file_path), tokens in batch_tfs.items():
             url_id = self.get_url_id(url)
+            file_id = self.get_file_id(file_path)
             for token, tf in tokens.items():
                 partial_index[token].append(Posting(url_id, tf))
         
@@ -112,6 +113,7 @@ class IndexManager:
     def merge_partial_indexes(self, partial_index_count: int):
         """Merge partial indexes using a k-way merge without loading everything into memory."""
         self.save_url_mapping()
+        self.save_file_mapping()
 
         files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
         merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes")

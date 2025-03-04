@@ -22,7 +22,7 @@ class FileOpener:
 
     def read_zip(self, count: int = None) -> dict:
         """
-        Read files from the ZIP and return a dict mapping urls to content
+        Read files from the ZIP and return a dict mapping a tuple (urls, file_name) to content
         param count: The number of files to read from the ZIP. If None, read all files.
         return: A dictionary mapping URLs to their content.
         """
@@ -43,7 +43,7 @@ class FileOpener:
                     normalized_url = self.normalize_url(url)
                     if normalized_url not in self.seenUrls:
                         self.seenUrls.add(normalized_url)
-                        url_to_content[normalized_url] = content
+                        url_to_content[(normalized_url, file_name)] = content
                         files_processed += 1
                         self.pbar.update(1)
 
