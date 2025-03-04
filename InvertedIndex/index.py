@@ -48,7 +48,9 @@ def tokenize_chunk(chunk, stemmer):
     result = {}
     for doc_name, doc_text in chunk.items():
         # Parse HTML and extract text
-        soup = BeautifulSoup(doc_text, features='xml')
+
+        #https://www.crummy.com/software/BeautifulSoup/bs4/doc/#specifying-the-parser-to-use should fix broken html files
+        soup = BeautifulSoup(doc_text, features='lxml')
         warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
         warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
         text = soup.get_text()
