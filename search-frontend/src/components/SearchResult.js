@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -7,6 +7,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Chip from '@mui/material/Chip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 
 /**
  * SearchResult component - Displays a single search result with expandable details
@@ -20,6 +22,38 @@ import { useTheme } from '@mui/material/styles';
 const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [summary, setSummary] = useState('');
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
+
+  // Function to fetch summary from backend wrapped in useCallback
+  const fetchSummary = useCallback(async () => {
+    setIsLoadingSummary(true);
+    setSummaryError(null);
+    
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/summary?id=${encodeURIComponent(result.doc_id)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching summary: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setSummary(data.summary || "No summary available");
+    } catch (error) {
+      console.error("Failed to fetch summary:", error);
+      setSummaryError(error.message);
+    } finally {
+      setIsLoadingSummary(false);
+    }
+  }, [result.doc_id]);
+
+  // Fetch summary from backend when component is expanded
+  useEffect(() => {
+    if (isExpanded && result.doc_id && !summary && !isLoadingSummary) {
+      fetchSummary();
+    }
+  }, [isExpanded, result.doc_id, summary, isLoadingSummary, fetchSummary]);
 
   return (
     <Box sx={{ 
@@ -122,6 +156,41 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
             </Box>
           </Box>
         )}
+        
+        {/* Summary Section */}
+        <Box 
+          sx={{ 
+            mt: 2, 
+            backgroundColor: 'rgba(0,0,0,0.2)', 
+            p: 1.5, 
+            borderRadius: '8px',
+            overflow: 'hidden',
+          }}
+        >
+          <Typography variant="subtitle2" gutterBottom sx={{
+            animation: isExpanded ? 'fadeIn 0.5s ease' : 'none',
+          }}>
+            Summary:
+          </Typography>
+          
+          {isLoadingSummary ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} sx={{ color: '#4fc3f7' }} />
+            </Box>
+          ) : summaryError ? (
+            <Alert severity="error" sx={{ mt: 1, backgroundColor: 'rgba(211, 47, 47, 0.1)' }}>
+              {summaryError}
+            </Alert>
+          ) : (
+            <Typography variant="body2" sx={{ 
+              color: '#ddd',
+              lineHeight: 1.5,
+              animation: 'fadeIn 0.5s ease',
+            }}>
+              {summary}
+            </Typography>
+          )}
+        </Box>
       </Collapse>
     </Box>
   );
