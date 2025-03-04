@@ -30,12 +30,14 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
   const fetchSummary = useCallback(async () => {
     setIsLoadingSummary(true);
     setSummaryError(null);
-    
+
     try {
       const response = await fetch(`http://127.0.0.1:5000/summary?id=${encodeURIComponent(result.doc_id)}`);
-      
+
       if (!response.ok) {
-        throw new Error(`Error fetching summary: ${response.statusText}`);
+        const data = await response.json();
+        setSummary("No summary available");
+        throw new Error(`Error fetching summary: ${data.error || 'Unknown error'}`);
       }
       
       const data = await response.json();

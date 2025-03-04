@@ -38,6 +38,8 @@ def summary():
     site_id = request.args.get('id', '')
     if not site_id:
         return jsonify({'error': 'No URL provided'}), 400
+    if not api_key:
+        return jsonify({'error': 'No API key provided'}), 400
     return search_engine.get_summary(site_id, api_key, jsonify)
 
 def main():
