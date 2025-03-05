@@ -170,6 +170,23 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
             p: 1.5, 
             borderRadius: '8px',
             overflow: 'hidden',
+            '@keyframes rippleIn': {
+              '0%': {
+                opacity: 0,
+                transform: 'scale(0.8)',
+                boxShadow: '0 0 0 rgba(79, 195, 247, 0)',
+              },
+              '50%': {
+                opacity: 0.5,
+                transform: 'scale(1.03)',
+                boxShadow: '0 0 20px rgba(79, 195, 247, 0.4)',
+              },
+              '100%': {
+                opacity: 1,
+                transform: 'scale(1)',
+                boxShadow: '0 0 0 rgba(79, 195, 247, 0)',
+              }
+            }
           }}
         >
           <Typography variant="subtitle2" gutterBottom sx={{
@@ -190,7 +207,11 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
             <Typography variant="body2" sx={{ 
               color: '#ddd',
               lineHeight: 1.5,
-              animation: 'fadeIn 0.5s ease',
+              animation: 'rippleIn 0.8s ease-out',
+              position: 'relative',
+              padding: '8px',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(79, 195, 247, 0.05)',
             }}>
               {summary}
             </Typography>
