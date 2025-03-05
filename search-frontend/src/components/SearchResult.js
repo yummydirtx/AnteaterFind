@@ -211,7 +211,6 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
               position: 'relative',
               padding: '8px',
               borderRadius: '4px',
-              backgroundColor: 'rgba(79, 195, 247, 0.05)',
             }}>
               {summary}
             </Typography>
