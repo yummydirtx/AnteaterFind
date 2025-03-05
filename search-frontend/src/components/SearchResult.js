@@ -25,17 +25,19 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState(null);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   // Function to fetch summary from backend wrapped in useCallback
   const fetchSummary = useCallback(async () => {
     setIsLoadingSummary(true);
     setSummaryError(null);
+    setFetchAttempted(true);
 
     try {
       const response = await fetch(`http://127.0.0.1:5000/summary?id=${encodeURIComponent(result.doc_id)}`);
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         setSummary("No summary available");
         throw new Error(`Error fetching summary: ${data.error || 'Unknown error'}`);
       }
@@ -45,6 +47,7 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
     } catch (error) {
       console.error("Failed to fetch summary:", error);
       setSummaryError(error.message);
+      setSummary("No summary available"); // Ensure summary is set even on error
     } finally {
       setIsLoadingSummary(false);
     }
@@ -52,10 +55,10 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
 
   // Fetch summary from backend when component is expanded
   useEffect(() => {
-    if (isExpanded && result.doc_id && !summary && !isLoadingSummary) {
+    if (isExpanded && result.doc_id && !fetchAttempted && !isLoadingSummary) {
       fetchSummary();
     }
-  }, [isExpanded, result.doc_id, summary, isLoadingSummary, fetchSummary]);
+  }, [isExpanded, result.doc_id, fetchAttempted, isLoadingSummary, fetchSummary]);
 
   return (
     <Box sx={{ 
