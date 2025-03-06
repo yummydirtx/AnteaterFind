@@ -26,7 +26,7 @@ def generate_m1_report(path: str):
         total_size = index_size + url_map_size
         f.write(f"The total size (in KB) of index on disk: {total_size:.2f}\n")
 
-def generate_index(path: str):
+def generate_index(path: str, sim_hash: int = 5):
     """
     Generates an inverted index from the document collection, without creating a report.
     Args:
@@ -34,7 +34,7 @@ def generate_index(path: str):
     Creates:
         index.json, urls.json, and token_positions.json
     """
-    InvertedIndex(path)
+    InvertedIndex(path, sim_hash)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

@@ -81,7 +81,7 @@ class InvertedIndex:
     Creates and manages an inverted index from a collection of documents.
     Implements disk-based indexing for memory efficiency.
     """
-    def __init__(self, zipPath: str = None):
+    def __init__(self, zipPath: str = None, simhash_threshold: int = 5):
         """
         Initialize the inverted index. If zipPath is provided, immediately
         processes the documents in that path.
@@ -90,7 +90,7 @@ class InvertedIndex:
         self.stemmer = PorterStemmer()
         self.partial_index_count = 0
         if zipPath is not None:
-            self.file_opener = FileOpener(zipPath)
+            self.file_opener = FileOpener(zipPath, simhash_threshold)
             self.load_zip()
 
     def load_zip(self):

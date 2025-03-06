@@ -32,6 +32,8 @@ class FileOpener:
         return Simhash(tokens)
 
     def near_duplicate(self, simhash_val):
+        if not simhash_val:
+            return False
         for hashVal in self.simhashes:
             if hashVal.distance(simhash_val) <= self.simhash_threshold:
                 return True
@@ -58,7 +60,10 @@ class FileOpener:
                     if count is not None and files_processed >= count:
                         break
                     normalized_url = self.normalize_url(url)
-                    content_hash = self.compute_simhash(content)
+                    if self.simhash_threshold > 0:
+                        content_hash = self.compute_simhash(content)
+                    else:
+                        content_hash = None
 
                     if normalized_url not in self.seenUrls and not self.near_duplicate(
                             content_hash):
