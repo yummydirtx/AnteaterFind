@@ -10,6 +10,16 @@ class Ranking:
     def __init__(self, total_documents, index_reader):
         self.total_documents = total_documents
         self.index_reader = index_reader
+        self.idf_dict = {}
+
+    def get_idf(self, term):
+        """Calculate idf once"""
+        if term not in self.idf_dict:
+            df = self.index_reader.get_document_frequency(term)
+            if df == 0:
+                return 0
+            self.idf_dict[term] = math.log10((self.total_documents+1) / (df +1))
+        return self.idf_dict[term]
 
     def calculate_query_vector(self, query_terms):
         """
@@ -29,19 +39,13 @@ class Ranking:
         term_count = len(query_terms)
 
         for term in query_terms:
-            query_tf[term] = query_tf.get(term, 0) + 1 / term_count
+            query_tf[term] = query_tf.get(term, 0) + 1
 
         # Calculate TF-IDF for each query term
         query_vector = {}
         for term, tf in query_tf.items():
-            df = self.index_reader.get_document_frequency(term)
-            if df > 0:
-                # IDF = log(total_documents / document_frequency)
-                idf = math.log10(self.total_documents / df)
-                query_vector[term] = tf * idf
-            else:
-                query_vector[term] = 0
-
+            idf = self.get_idf(term)
+            query_vector[term] = tf * idf
         return query_vector
 
     def calculate_document_vectors(self, doc_ids, query_terms):
@@ -58,15 +62,8 @@ class Ranking:
         doc_vectors = {doc_id: {} for doc_id in doc_ids}
 
         for term in query_terms:
+            idf = self.get_idf(term)
             postings = self.index_reader.get_postings_for_term(term)
-
-            # Calculate IDF for this term
-            df = len(postings)
-            if df > 0:
-                idf = math.log10(self.total_documents / df)
-            else:
-                idf = 0
-
             for posting in postings:
                 doc_id = posting['doc_id']
                 if doc_id in doc_ids:
