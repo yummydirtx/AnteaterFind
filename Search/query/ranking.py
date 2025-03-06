@@ -21,6 +21,9 @@ class Ranking:
         Returns:
             Dictionary mapping terms to their TF-IDF values in the query
         """
+        #error handling
+        if not query_terms:
+            raise ValueError("Query cannot be empty")
         # Calculate term frequencies in the query
         query_tf = {}
         term_count = len(query_terms)
