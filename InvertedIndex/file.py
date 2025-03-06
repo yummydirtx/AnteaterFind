@@ -3,12 +3,14 @@ from tqdm import tqdm
 from .zip_handler import ZipHandler
 from .index_manager import IndexManager
 from urllib.parse import urldefrag
-
+from simhash import Simhash
 class FileOpener:
-    def __init__(self, zipPath: str):
+    def __init__(self, zipPath: str, simhash_threshold: int = 5):
         """Initialize file opener with zip path"""
         self.zipPath = zipPath
         self.seenUrls = set()
+        self.simhashes = set()
+        self.simhash_threshold = simhash_threshold
         self.index_manager = IndexManager()
         
         # Initialize progress tracking
@@ -21,6 +23,17 @@ class FileOpener:
         #so we dont get the #content type of website
         return urldefrag(url)[0]
 
+    # https://usavps.com/blog/48168/
+
+    def compute_simhash(self, text):
+        tokens = text.split()
+        return Simhash(tokens)
+
+    def near_duplicate(self, simhash_val):
+        for hashVal in self.simhashes:
+            if hashVal.distance(simhash_val) <= self.simhash_threshold:
+                return True
+        return False
     def read_zip(self, count: int = None) -> dict:
         """
         Read files from the ZIP and return a dict mapping a tuple (urls, file_name) to content
@@ -42,7 +55,9 @@ class FileOpener:
                     if count is not None and files_processed >= count:
                         break
                     normalized_url = self.normalize_url(url)
-                    if normalized_url not in self.seenUrls:
+                    content_hash = self.compute_simhash(content)
+
+                    if normalized_url not in self.seenUrls and not self.near_duplicate(content_hash):
                         self.seenUrls.add(normalized_url)
                         url_to_content[(normalized_url, file_name)] = content
                         files_processed += 1
