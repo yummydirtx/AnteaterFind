@@ -7,3 +7,4 @@ flask_cors
 lxml
 openai
 tiktoken
+simhash
