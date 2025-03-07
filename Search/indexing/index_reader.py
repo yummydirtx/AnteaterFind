@@ -48,33 +48,44 @@ class IndexReader:
         # Total number of documents in the collection
         self.total_documents = len(self.urls)
     
-    def get_postings_for_term(self, term):
+    def get_postings_for_terms(self, terms):
         """
-        Retrieve postings for a specific term from disk or cache using O(1) lookup.
+        Retrieve postings for a list of terms efficiently with minimal disk I/O.
         
         Args:
-            term: The term to look up
+            terms: List of terms to retrieve postings for
             
         Returns:
-            List of postings for the term, or empty list if term not found
+            Dictionary mapping terms to their postings lists
         """
-        # First check the cache
-        cached_postings = self.cache.get(term)
-        if cached_postings is not None:
-            return cached_postings
-            
-        # If we have the position of this token in the index file
-        if term in self.token_positions:
-            try:
-                with open(self.index_path, 'r') as f:
-                    # Jump directly to the token's position
+        # Initialize results dictionary
+        result = {}
+        
+        # Check which terms are already in cache
+        terms_to_fetch = []
+        for term in terms:
+            cached_postings = self.cache.get(term)
+            if cached_postings is not None:
+                result[term] = cached_postings
+            elif term in self.token_positions:  # Only add terms that exist in the index
+                terms_to_fetch.append(term)
+            else:
+                result[term] = []  # Term not in index
+        
+        if not terms_to_fetch:
+            return result
+        
+        # Sort terms by their position in the file to minimize seeking
+        terms_to_fetch.sort(key=lambda t: self.token_positions[t])
+        
+        try:
+            with open(self.index_path, 'r') as f:
+                for term in terms_to_fetch:
                     position = self.token_positions[term]
                     f.seek(position)
                     
-                    # At this position, we should have: "token":[postings]
-                    # First, read the token part
-                    token_part = ""
                     # Read until we find the colon that separates token from postings
+                    token_part = ""
                     while True:
                         char = f.read(1)
                         if not char or char == ':':
@@ -82,21 +93,21 @@ class IndexReader:
                         token_part += char
                     
                     if not char or char != ':':
-                        raise ValueError(f"Unexpected end of file or format when reading token '{term}'")
+                        continue  # Skip if unexpected format
                     
-                    # Now read opening bracket for the postings array
+                    # Read opening bracket for the postings array
                     char = f.read(1)
                     if char != '[':
-                        raise ValueError(f"Expected '[' for postings array, got '{char}'")
+                        continue  # Skip if unexpected format
                     
-                    # Now read the entire postings array
-                    postings_str = '['  # Include the opening bracket
-                    bracket_count = 1   # We've already read one opening bracket
+                    # Read the entire postings array
+                    postings_str = '['
+                    bracket_count = 1
                     
                     while bracket_count > 0:
                         char = f.read(1)
                         if not char:  # End of file
-                            raise ValueError("Unexpected end of file while reading postings array")
+                            break
                             
                         postings_str += char
                         
@@ -105,22 +116,33 @@ class IndexReader:
                         elif char == ']':
                             bracket_count -= 1
                     
-                    # Now postings_str should contain the complete JSON array
-                    # But let's make sure it's valid by parsing it
                     try:
                         postings = json.loads(postings_str)
                         self.cache.put(term, postings)
-                        return postings
+                        result[term] = postings
                     except json.JSONDecodeError:
-                        raise ValueError(f"Failed to parse postings array: {postings_str[:100]}...")
+                        result[term] = []  # Use empty list on error
                         
-            except (IOError, ValueError, json.JSONDecodeError) as e:
-                print(f"Error reading postings for term '{term}': {e}")
-                return []
-        else:
-            # If token isn't in our position dictionary, it doesn't exist in the index
-            print(f"Token '{term}' not found in the index.")
-            return []
+        except IOError as e:
+            print(f"Error reading postings: {e}")
+            # For any terms we couldn't read, set empty postings
+            for term in terms_to_fetch:
+                if term not in result:
+                    result[term] = []
+        
+        return result
+    
+    def get_postings_for_term(self, term):
+        """
+        Retrieve postings for a single term using the batch method.
+        
+        Args:
+            term: The term to look up
+            
+        Returns:
+            List of postings for the term, or empty list if term not found
+        """
+        return self.get_postings_for_terms([term]).get(term, [])
     
     def has_term(self, term):
         """
@@ -151,6 +173,20 @@ class IndexReader:
         """
         postings = self.get_postings_for_term(term)
         return len(postings)
+    
+    def get_document_frequencies(self, query_terms):
+        """
+        Get the document frequencies for a list of query terms.
+        
+        Args:
+            query_terms: List of query terms (may contain duplicates)
+        Returns:
+            Dictionary mapping terms to their document frequencies
+        """
+        # Convert to set to remove duplicates before processing
+        unique_terms = set(query_terms)
+        postings_dict = self.get_postings_for_terms(list(unique_terms))
+        return {term: len(postings) for term, postings in postings_dict.items()}
 
     def get_url(self, doc_id):
         """
@@ -188,4 +224,3 @@ class IndexReader:
                         print(f"Invalid JSON in file: {file_name}")
         soup = BeautifulSoup(content, features='lxml')
         return soup.get_text()
-        

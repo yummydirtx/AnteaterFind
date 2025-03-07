@@ -6,8 +6,9 @@ from .indexing import IndexReader
 from nltk.corpus import stopwords
 
 
-stop_words = set(stopwords.words('english'))
+#stop_words = set(stopwords.words('english'))
 def remove_stopwords(query):
+    return [term for term in query]
     return [term for term in query if term not in stop_words]
 
 class Search:

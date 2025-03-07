@@ -46,24 +46,31 @@ class QueryProcessor:
         """
         if not query_terms:
             return set()
-            
-        # Find the least frequent term first to minimize initial result set
-        term_frequencies = [(term, self.index_reader.get_document_frequency(term)) for term in query_terms]
-        term_frequencies.sort(key=lambda x: x[1])  # Sort by frequency (ascending)
         
-        # If any term doesn't exist in the index, return empty set
-        if any(freq == 0 for _, freq in term_frequencies):
+        # Batch retrieve all term frequencies in one go
+        # (assuming index_reader supports batch operations, or implement if needed)
+        term_frequencies = self.index_reader.get_document_frequencies(query_terms)
+        
+        # Filter out terms that don't exist in the index
+        valid_terms = [(term, freq) for term, freq in term_frequencies.items() if freq > 0]
+        
+        if not valid_terms:
             return set()
-            
-        # Start with documents containing the least frequent term
-        first_term = term_frequencies[0][0]
-        postings = self.index_reader.get_postings_for_term(first_term)
-        result_docs = set(posting['doc_id'] for posting in postings)
         
-        # Intersect with documents containing each subsequent term
-        for term, _ in term_frequencies[1:]:
-            term_postings = self.index_reader.get_postings_for_term(term)
-            term_docs = set(posting['doc_id'] for posting in term_postings)
+        # Sort by frequency for optimal processing
+        valid_terms.sort(key=lambda x: x[1])
+        
+        # Batch retrieve postings for all terms
+        terms = [term for term, _ in valid_terms]
+        all_postings = self.index_reader.get_postings_for_terms(terms)
+        
+        # Start with the smallest set
+        first_term = valid_terms[0][0]
+        result_docs = set(posting['doc_id'] for posting in all_postings[first_term])
+        
+        # Intersect with remaining terms
+        for term, _ in valid_terms[1:]:
+            term_docs = set(posting['doc_id'] for posting in all_postings[term])
             result_docs &= term_docs
             
             # Early termination if intersection becomes empty
