@@ -14,17 +14,17 @@ class Ranking:
 
     def rank_results(self, results, query_terms):
         # Calculate query vector
-        query_vector = self.ranking.calculate_query_vector(query_terms)
+        query_vector = self.calculate_query_vector(query_terms)
         
         # Calculate document vectors
-        doc_vectors = self.ranking.calculate_document_vectors(results, query_terms)
+        doc_vectors = self.calculate_document_vectors(results, query_terms)
         
         # Calculate scores using both metrics
         scores = []
         
         for doc_id, doc_vector in doc_vectors.items():
             # Calculate cosine similarity (primary sort criteria)
-            cosine_sim = self.ranking.cosine_similarity(query_vector, doc_vector)
+            cosine_sim = self.cosine_similarity(query_vector, doc_vector)
             
             # Calculate TF-IDF average (secondary sort criteria)
             tf_idf_avg = sum(doc_vector.values()) / len(query_terms)
