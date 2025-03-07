@@ -3,6 +3,12 @@ from flask import Response
 from .summarizer import summarize
 from .query import Ranking, QueryProcessor
 from .indexing import IndexReader
+from nltk.corpus import stopwords
+
+
+stop_words = set(stopwords.words('english'))
+def remove_stopwords(query):
+    return [term for term in query if term not in stop_words]
 
 class Search:
     """
@@ -38,10 +44,11 @@ class Search:
         """
         # Process query
         query_terms = self.query_processor.tokenize_query(query)
+        query_terms = remove_stopwords(query_terms)
         
         if not query_terms:
             return []
-        
+
         # Get matching documents using boolean AND
         matching_doc_ids = self.query_processor.boolean_and_search(query_terms)
         
