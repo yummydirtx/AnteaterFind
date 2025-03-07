@@ -12,6 +12,35 @@ class Ranking:
         self.index_reader = index_reader
         self.idf_dict = {}
 
+    def rank_results(self, results, query_terms):
+        # Calculate query vector
+        query_vector = self.ranking.calculate_query_vector(query_terms)
+        
+        # Calculate document vectors
+        doc_vectors = self.ranking.calculate_document_vectors(results, query_terms)
+        
+        # Calculate scores using both metrics
+        scores = []
+        
+        for doc_id, doc_vector in doc_vectors.items():
+            # Calculate cosine similarity (primary sort criteria)
+            cosine_sim = self.ranking.cosine_similarity(query_vector, doc_vector)
+            
+            # Calculate TF-IDF average (secondary sort criteria)
+            tf_idf_avg = sum(doc_vector.values()) / len(query_terms)
+            
+            # Store both metrics for sorting
+            scores.append((doc_id, cosine_sim, tf_idf_avg, doc_vector))
+        
+        # Sort first by cosine similarity, then by TF-IDF average
+        scores.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        
+        # Create a composite score that combines both metrics for display
+        # Use cosine similarity as the main score, but keep it separate internally
+        results = [(doc_id, self.index_reader.get_url(doc_id), cosine_sim, doc_vector) 
+                    for doc_id, cosine_sim, _, doc_vector in scores]
+        return results
+
     def get_idf(self, term):
         """Calculate idf once"""
         if term not in self.idf_dict:
