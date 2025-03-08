@@ -1,7 +1,9 @@
 import json
 import pickle
 import os
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
+import warnings
+from bs4 import MarkupResemblesLocatorWarning
 import zipfile
 from .cache import LRUCache
 
@@ -222,5 +224,7 @@ class IndexReader:
                             content = json_data['content']
                     except json.JSONDecodeError:
                         print(f"Invalid JSON in file: {file_name}")
-        soup = BeautifulSoup(content, features='xml')
+        warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+        warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+        soup = BeautifulSoup(content, features='lxml')
         return soup.get_text()

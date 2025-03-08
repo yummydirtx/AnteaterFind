@@ -59,30 +59,32 @@ class IndexManager:
             for token, tf in tokens.items():
                 partial_index[token].append(Posting(url_id, tf))
         
-        # Write to file
-        filename = f'partial_index_{partial_index_count}.json'
-        with open(filename, 'w') as f:
+        # Write to binary file with custom format
+        filename = f'partial_index_{partial_index_count}.bin'
+        token_positions = {}
+        with open(filename, 'wb') as f_out:
             for token in sorted(partial_index.keys()):
-                entry = {
-                    "token": token,
-                    "postings": [vars(p) for p in partial_index[token]]
-                }
-                f.write(json.dumps(entry) + "\n")
+                token_positions[token] = f_out.tell()
+                # Write token and postings (postings converted to dicts)
+                pickle.dump((token, [vars(p) for p in partial_index[token]]), f_out)
+        # Save token positions separately for O(1) lookup later
+        index_filename = f'partial_index_{partial_index_count}_index.pkl'
+        with open(index_filename, 'wb') as idx_file:
+            pickle.dump(token_positions, idx_file)
         
         return filename
 
     def _initialize_file_iterators(self, files: List[str], merge_pbar):
-        """Initialize file iterators for each partial index file"""
+        """Initialize file iterators for each partial index file in binary mode"""
         file_iters = []
         for fname in files:
-            fp = open(fname, 'r')
-            line = fp.readline()
-            if line:
-                data = json.loads(line)
-                file_iters.append((data["token"], data["postings"], fp))
-            else:
+            fp = open(fname, 'rb')
+            try:
+                token, postings = pickle.load(fp)
+                file_iters.append((token, postings, fp))
+                merge_pbar.update(1)
+            except EOFError:
                 fp.close()
-            merge_pbar.update(1)
         return file_iters
 
     def _initialize_heap(self, file_iters):
@@ -116,7 +118,7 @@ class IndexManager:
         self.save_url_mapping()
         self.save_file_mapping()
 
-        files = [f'partial_index_{i}.json' for i in range(0, partial_index_count)]
+        files = [f'partial_index_{i}.bin' for i in range(0, partial_index_count)]
         merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes")
 
         file_iters = self._initialize_file_iterators(files, merge_pbar)
@@ -152,12 +154,11 @@ class IndexManager:
                 else:
                     current_postings.extend(postings)
 
-                next_line = fp.readline()
-                if next_line:
-                    data = json.loads(next_line)
-                    heapq.heappush(heap, (data["token"], counter, data["postings"], fp))
+                try:
+                    token, postings = pickle.load(fp)
+                    heapq.heappush(heap, (token, counter, postings, fp))
                     counter += 1
-                else:
+                except EOFError:
                     fp.close()
 
             if current_token is not None:
@@ -175,6 +176,8 @@ class IndexManager:
         with open('token_positions.pkl', 'wb') as f:
             pickle.dump(token_positions, f)
 
-        # Clean up temporary files
+        # Clean up temporary binary partial index files and their token index files
         for fname in files:
             os.remove(fname)
+            index_fname = fname.replace('.bin', '_index.pkl')
+            os.remove(index_fname)

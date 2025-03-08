@@ -50,9 +50,9 @@ def tokenize_chunk(chunk, stemmer):
         # Parse HTML and extract text
 
         #https://www.crummy.com/software/BeautifulSoup/bs4/doc/#specifying-the-parser-to-use should fix broken html files
-        soup = BeautifulSoup(doc_text, features='lxml')
         warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
         warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
+        soup = BeautifulSoup(doc_text, features='lxml')
         text = soup.get_text()
 
         # Create tokenizer that only captures alphanumeric
@@ -100,7 +100,9 @@ class InvertedIndex:
         """
         try:
             while True:
-                self.documents = self.file_opener.read_zip(15000)
+                # Read batches so there are 3 partial indexes
+                count = self.file_opener.total_files // 3
+                self.documents = self.file_opener.read_zip(count)
                 if not self.documents:
                     break
                 batch_tfs = self.tokenize_documents()
