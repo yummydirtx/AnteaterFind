@@ -16,8 +16,8 @@ class Search:
     Search component that handles retrieval of documents based on queries.
     Uses a disk-based approach with O(1) token lookups.
     """
-    def __init__(self, zip_path='zips/developer.zip', index_path='index.json', urls_path='urls.json', 
-                 positions_path='token_positions.json', cache_size=100):
+    def __init__(self, zip_path='zips/developer.zip', index_path='index.bin', urls_path='urls.json', 
+                 positions_path='token_positions.pkl', cache_size=100):
         """
         Initialize the search component without loading the entire index.
         

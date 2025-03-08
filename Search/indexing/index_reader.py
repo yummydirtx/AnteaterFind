@@ -1,4 +1,6 @@
 import json
+import pickle
+import os
 from bs4 import BeautifulSoup
 import zipfile
 from .cache import LRUCache
@@ -7,15 +9,15 @@ class IndexReader:
     """
     Handles disk-based index reading operations with O(1) token lookups.
     """
-    def __init__(self, zip_path='zips/developer.zip', index_path='index.json', urls_path='urls.json', 
-                 positions_path='token_positions.json', cache_size=100):
+    def __init__(self, zip_path='zips/developer.zip', index_path='index.bin', urls_path='urls.json', 
+                 positions_path='token_positions.pkl', cache_size=100):
         """
         Initialize the index reader component.
         
         Args:
-            index_path: Path to the inverted index JSON file
+            index_path: Path to the inverted index binary file
             urls_path: Path to the URLs mapping JSON file
-            positions_path: Path to the token positions file
+            positions_path: Path to the token positions pickle file
             cache_size: Number of terms to cache in memory
         """
         self.index_path = index_path
@@ -38,11 +40,33 @@ class IndexReader:
             
         # Load token positions for O(1) lookup
         try:
-            with open(positions_path, 'r') as f:
-                self.token_positions = json.load(f)
-            print(f"Loaded {len(self.token_positions)} token positions for fast lookups")
-        except FileNotFoundError:
-            print(f"Warning: Token positions file {positions_path} not found. Lookups will be slower.")
+            # Check if the file exists and its format
+            if os.path.exists(positions_path):
+                file_size = os.path.getsize(positions_path)
+                print(f"Loading token positions from {positions_path} ({file_size} bytes)")
+                
+                # Try loading as pickle
+                try:
+                    with open(positions_path, 'rb') as f:
+                        self.token_positions = pickle.load(f)
+                    print(f"Successfully loaded {len(self.token_positions)} token positions from pickle")
+                except Exception as e:
+                    print(f"Error loading pickle file: {e}")
+                    
+                    # Fallback to JSON if pickle fails
+                    if os.path.exists('token_positions.json'):
+                        print("Attempting to load token_positions.json as fallback")
+                        with open('token_positions.json', 'r') as f:
+                            self.token_positions = json.load(f)
+                        print(f"Loaded {len(self.token_positions)} token positions from JSON")
+                    else:
+                        print("No fallback token positions file found")
+                        self.token_positions = {}
+            else:
+                print(f"Warning: Token positions file {positions_path} not found.")
+                self.token_positions = {}
+        except Exception as e:
+            print(f"Error loading token positions: {e}")
             self.token_positions = {}
         
         # Total number of documents in the collection
@@ -79,49 +103,25 @@ class IndexReader:
         terms_to_fetch.sort(key=lambda t: self.token_positions[t])
         
         try:
-            with open(self.index_path, 'r') as f:
+            with open(self.index_path, 'rb') as f:
                 for term in terms_to_fetch:
                     position = self.token_positions[term]
                     f.seek(position)
                     
-                    # Read until we find the colon that separates token from postings
-                    token_part = ""
-                    while True:
-                        char = f.read(1)
-                        if not char or char == ':':
-                            break
-                        token_part += char
-                    
-                    if not char or char != ':':
-                        continue  # Skip if unexpected format
-                    
-                    # Read opening bracket for the postings array
-                    char = f.read(1)
-                    if char != '[':
-                        continue  # Skip if unexpected format
-                    
-                    # Read the entire postings array
-                    postings_str = '['
-                    bracket_count = 1
-                    
-                    while bracket_count > 0:
-                        char = f.read(1)
-                        if not char:  # End of file
-                            break
-                            
-                        postings_str += char
-                        
-                        if char == '[':
-                            bracket_count += 1
-                        elif char == ']':
-                            bracket_count -= 1
-                    
                     try:
-                        postings = json.loads(postings_str)
-                        self.cache.put(term, postings)
-                        result[term] = postings
-                    except json.JSONDecodeError:
-                        result[term] = []  # Use empty list on error
+                        # Load the pickled tuple (token, postings)
+                        stored_term, postings = pickle.load(f)
+                        
+                        # Verify we got the expected term (as a safety check)
+                        if stored_term == term:
+                            self.cache.put(term, postings)
+                            result[term] = postings
+                        else:
+                            # Something went wrong with the position
+                            result[term] = []
+                    except (pickle.PickleError, EOFError) as e:
+                        print(f"Error unpickling term {term}: {e}")
+                        result[term] = []
                         
         except IOError as e:
             print(f"Error reading postings: {e}")
@@ -222,5 +222,5 @@ class IndexReader:
                             content = json_data['content']
                     except json.JSONDecodeError:
                         print(f"Invalid JSON in file: {file_name}")
-        soup = BeautifulSoup(content, features='lxml')
+        soup = BeautifulSoup(content, features='xml')
         return soup.get_text()

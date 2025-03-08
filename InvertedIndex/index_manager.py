@@ -1,6 +1,7 @@
 import json
 import heapq
 import os
+import pickle
 from collections import defaultdict
 from typing import Dict, List
 from tqdm import tqdm
@@ -126,11 +127,10 @@ class IndexManager:
 
         heap, counter = self._initialize_heap(file_iters)
         
-        # Dictionary to store token positions in the index file
+        # Dictionary to store token positions in the binary index file
         token_positions = {}
 
-        with open('index.json', 'w') as outfile:
-            outfile.write('{')
+        with open('index.bin', 'wb') as outfile:
             first_token = True
             current_token = None
             current_postings = []
@@ -140,8 +140,13 @@ class IndexManager:
                 
                 if current_token is None or token != current_token:
                     if current_token is not None:
-                        self._write_current_token(outfile, current_token, current_postings, first_token, token_positions)
-                        first_token = False
+                        # Record position before writing the token
+                        token_position = outfile.tell()
+                        token_positions[current_token] = token_position
+                        
+                        # Pickle the token and its postings
+                        pickle.dump((current_token, current_postings), outfile)
+                    
                     current_token = token
                     current_postings = postings
                 else:
@@ -156,15 +161,19 @@ class IndexManager:
                     fp.close()
 
             if current_token is not None:
-                self._write_current_token(outfile, current_token, current_postings, first_token, token_positions)
-            outfile.write('}')
+                # Record position for the last token
+                token_position = outfile.tell()
+                token_positions[current_token] = token_position
+                
+                # Pickle the last token and its postings
+                pickle.dump((current_token, current_postings), outfile)
 
         merge_pbar.close()
         
-        # Save token positions to a separate file
+        # Save token positions to a separate file using pickle
         print("Saving token positions for fast lookup...")
-        with open('token_positions.json', 'w') as f:
-            json.dump(token_positions, f)
+        with open('token_positions.pkl', 'wb') as f:
+            pickle.dump(token_positions, f)
 
         # Clean up temporary files
         for fname in files:
