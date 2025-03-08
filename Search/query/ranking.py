@@ -1,4 +1,7 @@
 import math
+from nltk.corpus import stopwords
+
+stop_words = set(stopwords.words('english'))
 
 class Ranking:
     """
@@ -65,7 +68,7 @@ class Ranking:
             raise ValueError("Query cannot be empty")
         # Calculate term frequencies in the query
         query_tf = {}
-        term_count = len(query_terms)
+  #      term_count = len(query_terms)
 
         for term in query_terms:
             query_tf[term] = query_tf.get(term, 0) + 1
@@ -74,7 +77,9 @@ class Ranking:
         query_vector = {}
         for term, tf in query_tf.items():
             idf = self.get_idf(term)
-            query_vector[term] = tf * idf
+            #applying reduction weight for stopwords
+            weight = 0.5 if term in stop_words else 1.0
+            query_vector[term] = tf * idf * weight
         return query_vector
 
     def calculate_document_vectors(self, doc_ids, query_terms):
@@ -96,8 +101,11 @@ class Ranking:
             for posting in postings:
                 doc_id = posting['doc_id']
                 if doc_id in doc_ids:
+                    #reducing weight of stop words
+                    weight = 0.5 if term in stop_words else 1.0
+
                     # Store TF-IDF instead of just TF
-                    doc_vectors[doc_id][term] = posting['tf'] * idf
+                    doc_vectors[doc_id][term] = posting['tf'] * idf *weight
 
         return doc_vectors
 

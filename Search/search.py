@@ -3,13 +3,10 @@ from flask import Response
 from .summarizer import summarize
 from .query import Ranking, QueryProcessor
 from .indexing import IndexReader
-from nltk.corpus import stopwords
+#from nltk.corpus import stopwords
 
 
 #stop_words = set(stopwords.words('english'))
-def remove_stopwords(query):
-    return [term for term in query]
-    return [term for term in query if term not in stop_words]
 
 class Search:
     """
@@ -64,7 +61,6 @@ class Search:
         """
         # Process query
         query_terms = self.query_processor.tokenize_query(query)
-        query_terms = remove_stopwords(query_terms)
         start_time = time.time()
         results = self.search(query_terms)
         query_time = time.time() - start_time
