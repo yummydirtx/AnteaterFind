@@ -26,7 +26,7 @@ const ResultSummary = ({ totalResults, queryTime }) => {
       animationFillMode: 'both',
     }}>
       <Typography variant="subtitle2" color="text.secondary">
-        Found {totalResults} documents in {queryTime ? queryTime.toFixed(4) : '0'} seconds
+        Found {totalResults} documents in {queryTime ? (queryTime * 1000).toFixed(2) : '0'} milliseconds
       </Typography>
     </Box>
   );
