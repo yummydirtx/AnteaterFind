@@ -1,0 +1,26 @@
+Bad Queries
+1. cs 121 - first 2 are relevant but the next 2 are not and then 5th one is relevant
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
+Good Queries
+1. master of software engineering
+2. machine learning
+3
+4
+5
+6
+7
+8
+9
+10
+
+To improve ranked retrieval
+To improve query processing time
