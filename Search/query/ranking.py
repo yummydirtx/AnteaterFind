@@ -1,8 +1,6 @@
 import math
 from nltk.corpus import stopwords
 
-stop_words = set(stopwords.words('english'))
-
 class Ranking:
     """
     The Ranking class provides functionality for scoring and ranking search results.
@@ -29,19 +27,19 @@ class Ranking:
             # Calculate cosine similarity (primary sort criteria)
             cosine_sim = self.cosine_similarity(query_vector, doc_vector)
             
-            # Calculate TF-IDF average (secondary sort criteria)
-            tf_idf_avg = sum(doc_vector.values()) / len(query_terms)
+            # Calculate TF-IDF total for secondary sort criteria
+            tf_idf_total = sum(doc_vector.values())
             
-            # Store both metrics for sorting
-            scores.append((doc_id, cosine_sim, tf_idf_avg, doc_vector))
+            # Store combined score for sorting
+            combined_score = cosine_sim * tf_idf_total
+            scores.append((doc_id, combined_score, doc_vector))
         
-        # Sort first by cosine similarity, then by TF-IDF average
-        scores.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        # Sort by combined score
+        scores.sort(key=lambda x: x[1], reverse=True)
         
         # Create a composite score that combines both metrics for display
-        # Use cosine similarity as the main score, but keep it separate internally
-        results = [(doc_id, self.index_reader.get_url(doc_id), cosine_sim, doc_vector) 
-                    for doc_id, cosine_sim, _, doc_vector in scores]
+        results = [(doc_id, self.index_reader.get_url(doc_id), combined_score, doc_vector) 
+                    for doc_id, combined_score, doc_vector in scores]
         return results
 
     def get_idf(self, term):
@@ -77,9 +75,7 @@ class Ranking:
         query_vector = {}
         for term, tf in query_tf.items():
             idf = self.get_idf(term)
-            #applying reduction weight for stopwords
-            weight = 0.5 if term in stop_words else 1.0
-            query_vector[term] = tf * idf * weight
+            query_vector[term] = tf * idf
         return query_vector
 
     def calculate_document_vectors(self, doc_ids, query_terms):
@@ -101,11 +97,9 @@ class Ranking:
             for posting in postings:
                 doc_id = posting['doc_id']
                 if doc_id in doc_ids:
-                    #reducing weight of stop words
-                    weight = 0.5 if term in stop_words else 1.0
 
                     # Store TF-IDF instead of just TF
-                    doc_vectors[doc_id][term] = posting['tf'] * idf *weight
+                    doc_vectors[doc_id][term] = posting['tf'] * idf
 
         return doc_vectors
 
