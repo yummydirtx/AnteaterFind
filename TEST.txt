@@ -1,22 +1,22 @@
 Bad Queries
 1. cs 121 - first 2 are relevant but the next 2 are not and then 5th one is relevant
-2
-3
-4
-5
-6
-7
-8
-9
-10
+2. software engineering - all irrelavant hits
+3. iftekhar ahmed - only last 2 are relevant
+4. master of software engineering - first 5 links are all from the same owner
+5.
+6.
+7.
+8.
+9.
+10.
 
 Good Queries
-1. master of software engineering
+1. master of human-computer interaction
 2. machine learning
-3
-4
-5
-6
+3. ACM
+4. ics undergraduate student affairs office in donald bren hall
+5. alex thornton
+6. mswe
 7
 8
 9
