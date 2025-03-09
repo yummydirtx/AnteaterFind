@@ -52,21 +52,27 @@ class IndexManager:
             filename: Name of the file where the partial index was saved
         """
         # Create partial index
-        partial_index = defaultdict(list)
-        for (url, file_path), tokens in batch_tfs.items():
-            url_id = self.get_url_id(url)
-            file_id = self.get_file_id(file_path)
-            for token, tf in tokens.items():
-                partial_index[token].append(Posting(url_id, tf))
+        with tqdm(total=len(batch_tfs), desc="Creating partial index", leave=False) as pbar:
+            partial_index = defaultdict(list)
+            for (url, file_path), tokens in batch_tfs.items():
+                url_id = self.get_url_id(url)
+                file_id = self.get_file_id(file_path)
+                for token, tf in tokens.items():
+                    partial_index[token].append(Posting(url_id, tf))
+                pbar.update(1)
+            pbar.close()
         
         # Write to binary file with custom format
         filename = f'partial_index_{partial_index_count}.bin'
         token_positions = {}
         with open(filename, 'wb') as f_out:
-            for token in sorted(partial_index.keys()):
-                token_positions[token] = f_out.tell()
-                # Write token and postings (postings converted to dicts)
-                pickle.dump((token, [vars(p) for p in partial_index[token]]), f_out)
+            with tqdm(total=len(partial_index), desc="Writing partial index to disk", leave=False) as pbar:
+                for token in sorted(partial_index.keys()):
+                    token_positions[token] = f_out.tell()
+                    # Write token and postings (postings converted to dicts)
+                    pickle.dump((token, [vars(p) for p in partial_index[token]]), f_out)
+                    pbar.update(1)
+                pbar.close()
         # Save token positions separately for O(1) lookup later
         index_filename = f'partial_index_{partial_index_count}_index.pkl'
         with open(index_filename, 'wb') as idx_file:
@@ -119,7 +125,7 @@ class IndexManager:
         self.save_file_mapping()
 
         files = [f'partial_index_{i}.bin' for i in range(0, partial_index_count)]
-        merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes")
+        merge_pbar = tqdm(total=partial_index_count, desc="Merging partial indexes", leave=False)
 
         file_iters = self._initialize_file_iterators(files, merge_pbar)
         
