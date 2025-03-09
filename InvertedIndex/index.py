@@ -44,15 +44,15 @@ def tokenize_chunk(chunk, stemmer):
         warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
         warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
         soup = BeautifulSoup(doc_text, features='lxml')
-        text = soup.get_text()
+        text = soup.get_text(separator=" ")
 
         # Tokenize using regex
         tokens = re.findall(r'[A-Za-z0-9]+', text.lower())
         
         # Extract weighted tokens
         weighted_tokens = weighted_tags(soup)
-        weighted_tokens = [token.lower() for token in weighted_tokens]
-        
+        weighted_tokens = [stemmer.stem(token.lower()) for token in weighted_tags(soup)]
+
         # Stem tokens
         stemmed_tokens = [stemmer.stem(token) for token in tokens]
         
