@@ -3,35 +3,26 @@ from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning, XMLParsedAsHTMLWar
 import warnings
 import re
 from nltk.stem import PorterStemmer
-from nltk.tokenize import RegexpTokenizer
 from collections import Counter
 import json
 import ijson
 import multiprocessing
 from functools import partial
-import os
+import tqdm
 
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 def weighted_tags(soup) -> list:
-        """
-        Extracts text from specific html tags (h1, h2, h3, b, strong) and applies weight
-        Args:
-             soup: BeautifulSoup object that represents the parsed HTML text
-        Returns:
-            List of tokens extracted from weighted tags, where token is being multiplied based on
-            weight of the tag.
-        """
-
-        tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5} # b and strong are the same
-        weighted_tokens = []
-        #https://pytutorial.com/beautifulsoup-how-to-get-text-inside-tag-or-tgs/
-        for tag, weight in tag_weights.items():
-            for word in soup.find_all(tag):
-                text = word.get_text()
-                tokens = re.findall(r'\b[A-Za-z0-9]+\b', text)
-                weighted_tokens.extend([token for token in tokens for _ in range(int(weight))])
-        return weighted_tokens
+    tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5}
+    weighted_tokens = []
+    
+    # Process all tags in one pass
+    for tag in soup.find_all(list(tag_weights.keys())):
+        weight = tag_weights.get(tag.name, 1)
+        tokens = re.findall(r'\b[A-Za-z0-9]+\b', tag.get_text().lower())
+        weighted_tokens.extend([token for token in tokens for _ in range(int(weight))])
+    
+    return weighted_tokens
 
 # Worker function for multiprocessing
 def tokenize_chunk(chunk, stemmer):
@@ -55,12 +46,8 @@ def tokenize_chunk(chunk, stemmer):
         soup = BeautifulSoup(doc_text, features='lxml')
         text = soup.get_text()
 
-        # Create tokenizer that only captures alphanumeric
-        tokenizer = RegexpTokenizer(r'[A-Za-z0-9]+')
-        
-        # Tokenize
-        tokens = tokenizer.tokenize(text)
-        tokens = [token.lower() for token in tokens]
+        # Tokenize using regex
+        tokens = re.findall(r'[A-Za-z0-9]+', text.lower())
         
         # Extract weighted tokens
         weighted_tokens = weighted_tags(soup)
@@ -122,16 +109,22 @@ class InvertedIndex:
         """
 
         # Determine optimal number of processes
-        num_cores = max(1, os.cpu_count() - 1)  # Leave one core free for system
+        num_processes = min(multiprocessing.cpu_count(), len(self.documents))
         
         # Split documents into chunks for parallel processing
-        chunk_size = max(1, len(self.documents) // num_cores)
+        chunk_size = max(1, len(self.documents) // num_processes)
         chunks = [dict(list(self.documents.items())[i:i + chunk_size]) 
                  for i in range(0, len(self.documents), chunk_size)]
         
         # Process chunks in parallel to get raw token counts
-        with multiprocessing.Pool(processes=num_cores) as pool:
-            raw_results = pool.map(partial(tokenize_chunk, stemmer=self.stemmer), chunks)
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            raw_results = list(tqdm.tqdm(
+                pool.imap(partial(tokenize_chunk, stemmer=self.stemmer), chunks),
+                total=len(chunks),
+                desc="Tokenizing documents",
+                unit="chunk",
+                leave=False
+            ))
         
         # Combine results from all processes
         token_counts = {}
