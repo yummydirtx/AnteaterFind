@@ -1,5 +1,4 @@
 import math
-from nltk.corpus import stopwords
 
 class Ranking:
     """
