@@ -7,7 +7,7 @@ Bad Queries
 6. what is software testing and how much - slow queries
 7. search engine - irrelevant hits only last 1
 8. What is the importance of information systems in the modern world - slow, 3/5 are irrelevant
-9.
+9. Who is the greatest in the world - slow
 10. the best way to predict the future is to invent it - slow
 
 Good Queries
@@ -20,7 +20,7 @@ Good Queries
 7. phd in computer science
 8. informatics is everywhere
 9. artificial intelligence
-10.
+10. research
 
 To improve ranking performance we implemented cosine similarity and tf-idf scoring. We realized that when
 we treated them separately we were not always getting the best searches so, we multiplied the cosine similarity
