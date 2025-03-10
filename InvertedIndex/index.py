@@ -22,7 +22,7 @@ def weighted_tags(soup) -> list:
         List of tokens that are duplicated based on weights given
     """
 
-    tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5}
+    tag_weights = {'title':5, 'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5}
     weighted_tokens = []
     
     # Process all tags in one pass
