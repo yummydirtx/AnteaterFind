@@ -36,7 +36,7 @@ To install the Python dependencies for this project, clone the repository and in
 
 ```bash
 # Clone the repository
-git clone https://github.com/yummydirtx/AnteaterFind.git
+git clone <...link to anteaterfind repo>
 cd AnteaterFind
 
 # Install the Python dependencies
