@@ -19,7 +19,7 @@ Good Queries
 6. mswe
 7. phd in computer science
 8. informatics is everywhere
-9.
+9. artificial intelligence
 10.
 
 To improve ranking performance we implemented cosine similarity and tf-idf scoring. We realized that when

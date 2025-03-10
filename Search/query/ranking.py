@@ -13,6 +13,14 @@ class Ranking:
         self.idf_dict = {}
 
     def rank_results(self, results, query_terms):
+        """Rank documents based on relevance to query
+        Args:
+            results: collection of documents
+            query_terms: collection of query terms
+        Returns:
+            List of tuples: doc id, doc url, combined score (cosine x tf-idf), doc vector
+        """
+
         # Calculate query vector
         query_vector = self.calculate_query_vector(query_terms)
         
@@ -42,7 +50,13 @@ class Ranking:
         return results
 
     def get_idf(self, term):
-        """Calculate idf once"""
+        """
+        Calculate idf once
+        Args:
+            term: term/token that needs idf computation
+        Returns
+            idf value for term
+        """
         if term not in self.idf_dict:
             df = self.index_reader.get_document_frequency(term)
             if df == 0:
