@@ -61,6 +61,9 @@ Run the indexer from your command line:
 # Change your directory to the base directory, if it isn't there already
 # Replace the path with the path to your zip containing the documents to index
 python start_index.py path/to/documents.zip
+
+# To run the indexer with simhash to eliminate similar documents use:
+python start_index.py path/to/documents.zip -s
 ```
 
 ### Search
