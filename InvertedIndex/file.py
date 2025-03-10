@@ -21,25 +21,17 @@ class FileOpener:
             self.pbar = tqdm(total = self.total_files, desc = "Processing files")
 
     def normalize_url(self, url):
-        """
-        Removes fragments from urls
-        """
+        """Remove fragment"""
         # so we dont get the #content type of website
         return urldefrag(url)[0]
 
     # https://usavps.com/blog/48168/
 
     def compute_simhash(self, text):
-        """
-        Gets tokens and converts it into binary
-        """
         tokens = text.split()
         return Simhash(tokens)
 
     def near_duplicate(self, simhash_val):
-        """
-        Checks if the simhash values are similar
-        """
         if not simhash_val:
             return False
         for hashVal in self.simhashes:
