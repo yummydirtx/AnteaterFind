@@ -1,14 +1,14 @@
 Bad Queries
 1. cs 121 - first 2 are relevant but the next 2 are not and then 5th one is relevant
-2. software engineering - all irrelavant hits
+2. software engineering - all irrelevant hits
 3. iftekhar ahmed - only last 2 are relevant
-4. master of software engineering - first 5 links are all from the same owner
-5.
-6.
-7.
-8.
+4. master of software engineering - first 5 links are all from the same owner, processing time > 300 ms
+5. research uci computer science 2001 - slow queries
+6. what is software testing and how much - slow queries
+7. search engine - irrelevant hits only last 1
+8. What is the importance of information systems in the modern world - slow, 3/5 are irrelevant
 9.
-10.
+10. the best way to predict the future is to invent it - slow
 
 Good Queries
 1. master of human-computer interaction
@@ -17,10 +17,15 @@ Good Queries
 4. ics undergraduate student affairs office in donald bren hall
 5. alex thornton
 6. mswe
-7
-8
-9
-10
+7. phd in computer science
+8. informatics is everywhere
+9.
+10.
 
-To improve ranked retrieval
-To improve query processing time
+To improve ranking performance we implemented cosine similarity and tf-idf scoring. We realized that when
+we treated them separately we were not always getting the best searches so, we multiplied the cosine similarity
+score with the average tf-idf score. This made the searches more relevant.
+
+To improve runtime performance we created 3 partial indexes. In these partial indexes we tokenized them and
+used multithreading to save index processing time. These indexes included, the token, the url's/doc number, and the tf scores
+These partial indexes where then converted by pickle where they were turned into binary. We also ensured O(1) look up time when we could.
