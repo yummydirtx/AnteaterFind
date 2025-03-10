@@ -13,6 +13,15 @@ import tqdm
 # how to find the tf-idf https://www.learndatasci.com/glossary/tf-idf-term-frequency-inverse-document-frequency/
 
 def weighted_tags(soup) -> list:
+    """
+    Process tokens if they have tags (ie: h1, h2, h3, b, strong)
+    Args:
+        soup: BeautifulSoup object
+
+    Returns:
+        List of tokens that are duplicated based on weights given
+    """
+
     tag_weights = {'h1': 4, 'h2': 3, 'h3': 2, 'b': 1.5, 'strong': 1.5}
     weighted_tokens = []
     
