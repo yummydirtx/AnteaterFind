@@ -1,11 +1,11 @@
-import openai
+from google import genai
 import tiktoken
 
 def truncate_text(text, max_tokens=50000):
     """Truncate text to stay within token limit"""
     try:
         # Use tiktoken for accurate token counting
-        encoding = tiktoken.encoding_for_model("gpt-4o-mini")
+        encoding = tiktoken.encoding_for_model("gemini-2.0-flash")
         tokens = encoding.encode(text)
         
         if len(tokens) > max_tokens:
@@ -25,13 +25,9 @@ def summarize(text_context, api_key):
     truncated_text = truncate_text(text_context, max_tokens=50000)
     
     prompt = f"Summarize the following text in 2-3 sentences:\n\n{truncated_text}"
-    oa = openai.OpenAI(api_key=api_key)
-    response = oa.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a summarizer for a search engine."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=150,
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents = "You are search engine that provides concise summaries of web pages. Your task is to summarize the content of the following text in 2-3 sentences, no need to start with a complete sentence (aka, no need to clarify that you are summarizing a web page). " + prompt
     )
-    return response.choices[0].message.content
+    return response.text
