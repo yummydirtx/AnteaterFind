@@ -18,7 +18,8 @@ CORS(app,
          "supports_credentials": True # Explicitly allow credentials
      }})
 
-zip_path = os.path.join(os.path.dirname(__file__), 'data', 'search_index.zip')
+api_key = os.environ.get("OPENAI_API_KEY")
+zip_path = os.environ.get("DOC_PATH")
 search_engine = Search(zip_path)
 
 def convert_sets_to_lists(obj):
@@ -42,7 +43,6 @@ def search():
         return jsonify({"error": "No query provided"}), 400
     try:
         results = search_engine.search(query)
-        app.logger.info(f"Search results: {results}")  # Debugging line
         serializable_results = convert_sets_to_lists(results)
         return jsonify(serializable_results), 200
     except Exception as e:
@@ -57,7 +57,7 @@ def summary():
         app.logger.warning("Summary request with no site_id.")
         return jsonify({"error": "No site_id provided"}), 400
     try:
-        summary_data = search_engine.get_summary(site_id)
+        summary_data = search_engine.get_summary(site_id, api_key)
         if summary_data is None:
             return jsonify({"error": "Site ID not found"}), 404
         serializable_summary_data = convert_sets_to_lists(summary_data)
