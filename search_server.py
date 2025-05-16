@@ -5,22 +5,18 @@ import sys
 import os
 
 app = Flask(__name__)
-# Configure CORS more explicitly to handle both localhost and 127.0.0.1
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://anteaterfind.com"]}})
+# Configure CORS more explicitly to handle origins, methods, and headers
+CORS(app, 
+     resources={r"/*": {
+         "origins": ["http://localhost:3000", "https://anteaterfind.com"],
+         "methods": ["GET", "PUT", "POST", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization"]
+     }})
 
 # Initialize search engine
 api_key = os.environ.get("OPENAI_API_KEY")
 zip_path = os.environ.get("DOC_PATH")
 search_engine = Search(zip_path)
-
-# Add a custom after_request handler to ensure CORS headers are present
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Origin', 'https://anteaterfind.com')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
 
 @app.route('/search', methods=['GET'])
 def search():
