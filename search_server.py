@@ -9,10 +9,14 @@ app = Flask(__name__)
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
 
-# Configure CORS more explicitly to handle origins, methods, and headers
-CORS(app, resources={r"/search": {"origins": ["https://anteaterfind.com", "http://localhost:3000"],
-                                   "methods": ["GET", "OPTIONS"],
-                                   "allow_headers": ["Authorization", "Content-Type"]}})
+# Configure CORS more explicitly to handle all routes, origins, methods, and headers
+CORS(app, 
+     resources={r"/*": { # Apply to all routes under the app
+         "origins": ["https://anteaterfind.com", "http://localhost:3000"],
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], # Add other methods if needed
+         "allow_headers": ["Authorization", "Content-Type"],
+         "supports_credentials": True # Explicitly allow credentials
+     }})
 
 zip_path = os.path.join(os.path.dirname(__file__), 'data', 'search_index.zip')
 search_engine = Search(zip_path)
