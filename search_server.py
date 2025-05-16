@@ -21,6 +21,18 @@ CORS(app,
 zip_path = os.path.join(os.path.dirname(__file__), 'data', 'search_index.zip')
 search_engine = Search(zip_path)
 
+def convert_sets_to_lists(obj):
+    """
+    Recursively converts sets to lists within a data structure.
+    """
+    if isinstance(obj, set):
+        return list(obj)
+    if isinstance(obj, list):
+        return [convert_sets_to_lists(item) for item in obj]
+    if isinstance(obj, dict):
+        return {k: convert_sets_to_lists(v) for k, v in obj.items()}
+    return obj
+
 @app.route('/search', methods=['GET'])
 def search():
     app.logger.info(f"Search request received. Origin: {request.headers.get('Origin')}") # Log the Origin header
@@ -30,7 +42,9 @@ def search():
         return jsonify({"error": "No query provided"}), 400
     try:
         results = search_engine.search(query)
-        return jsonify(results), 200
+        print(f"Search results: {results}")  # Debugging line
+        serializable_results = convert_sets_to_lists(results)
+        return jsonify(serializable_results), 200
     except Exception as e:
         app.logger.error(f"Error processing search request: {e}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
@@ -46,7 +60,8 @@ def summary():
         summary_data = search_engine.get_summary(site_id)
         if summary_data is None:
             return jsonify({"error": "Site ID not found"}), 404
-        return jsonify(summary_data), 200
+        serializable_summary_data = convert_sets_to_lists(summary_data)
+        return jsonify(serializable_summary_data), 200
     except Exception as e:
         app.logger.error(f"Error processing summary request: {e}", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
