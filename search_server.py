@@ -6,12 +6,13 @@ import os
 
 app = Flask(__name__)
 # Configure CORS more explicitly to handle origins, methods, and headers
-CORS(app, 
+CORS(app,
      resources={r"/*": {
          "origins": ["http://localhost:3000", "https://anteaterfind.com"],
          "methods": ["GET", "PUT", "POST", "DELETE", "OPTIONS"],
          "allow_headers": ["Content-Type", "Authorization"]
-     }})
+     }},
+     supports_credentials=True) # Add supports_credentials=True globally
 
 # Initialize search engine
 api_key = os.environ.get("OPENAI_API_KEY")
