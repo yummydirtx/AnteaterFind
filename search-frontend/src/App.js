@@ -47,7 +47,7 @@ function App() {
     setLastSearchedQuery(query);
 
     try {
-      const response = await fetch(`http://127.0.0.1:5000/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`https://api.anteaterfind.com/search?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       setResults(data.results || []);
       setQueryTime(data.query_time);
