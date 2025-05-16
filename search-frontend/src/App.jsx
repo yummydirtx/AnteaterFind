@@ -6,7 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material';
 import Button from '@mui/material/Button';
 
-import { SearchBar, ResultSummary, NoResults, SearchResult } from './components';
+import { SearchBar, ResultSummary, NoResults, SearchResult, Footer } from './components';
 
 /**
  * Main application component that manages the search interface
@@ -167,6 +167,7 @@ function App() {
           )}
         </Box>
       </Box>
+      <Footer />
     </ThemeProvider>
   );
 }
