@@ -158,7 +158,16 @@ function App() {
                 <Button 
                   onClick={() => handleSearch(true)} 
                   disabled={loadingMore} 
-                  sx={{ marginTop: 2 }}
+                  sx={{
+                    marginTop: 2,
+                    // Apply the same animation as search results
+                    animation: 'slideUp 0.6s ease',
+                    animationFillMode: 'both',
+                    // Delay slightly more than the last result to appear after them
+                    animationDelay: `${results.length * 0.12 + 0.1}s`,
+                    opacity: 0, // Start with opacity 0 for the animation
+                    transform: 'translateY(50px)', // Start transformed for the animation
+                  }}
                 >
                   {loadingMore ? <CircularProgress size={24} /> : 'Load More'}
                 </Button>
