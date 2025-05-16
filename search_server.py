@@ -17,7 +17,7 @@ if len(sys.argv) > 2:
 else:
     api_key = os.environ.get("OPENAI_API_KEY")
     zip_path = os.environ.get("DOC_PATH")
-    search_engine = Search()
+    search_engine = Search(zip_path)
 
 # Add a custom after_request handler to ensure CORS headers are present
 @app.after_request
