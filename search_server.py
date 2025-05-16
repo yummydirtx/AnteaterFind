@@ -9,15 +9,9 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://34.172.71.18:5000", "http://anteaterfind.com"]}})
 
 # Initialize search engine
-if len(sys.argv) > 2:
-        zip_path = sys.argv[1]
-        api_key = sys.argv[2]
-        os.environ["OPENAI_API_KEY"] = api_key
-        search_engine = Search(zip_path)
-else:
-    api_key = os.environ.get("OPENAI_API_KEY")
-    zip_path = os.environ.get("DOC_PATH")
-    search_engine = Search(zip_path)
+api_key = os.environ.get("OPENAI_API_KEY")
+zip_path = os.environ.get("DOC_PATH")
+search_engine = Search(zip_path)
 
 # Add a custom after_request handler to ensure CORS headers are present
 @app.after_request
