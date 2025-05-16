@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { alpha } from '@mui/material';
+import Button from '@mui/material/Button';
 
 import { SearchBar, ResultSummary, NoResults, SearchResult } from './components';
 
@@ -17,11 +18,14 @@ function App() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false); // Added state for loading more results
   const [queryTime, setQueryTime] = useState(null);
   const [totalResults, setTotalResults] = useState(0);
   const [expandedResults, setExpandedResults] = useState({});
   const [hasSearched, setHasSearched] = useState(false);
   const [lastSearchedQuery, setLastSearchedQuery] = useState('');
+  const [currentOffset, setCurrentOffset] = useState(0); // Added state for current offset
+  const resultsPerPage = 5; // Define how many results to load each time
 
   /**
    * Toggles the expanded/collapsed state of a search result
@@ -38,28 +42,46 @@ function App() {
    * Performs search by calling the backend API
    * Updates results state with the search response data
    */
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async (isLoadMore = false) => { // Added isLoadMore parameter
     if (!query) {
       // console.log("App.js: handleSearch - query is empty, returning");
       return;
     }
-    setLoading(true);
-    setExpandedResults({});
-    setHasSearched(true);
-    setLastSearchedQuery(query);
+
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setResults([]); // Reset results for a new search
+      setCurrentOffset(0); // Reset offset for a new search
+      setExpandedResults({});
+      setHasSearched(true);
+      setLastSearchedQuery(query);
+    }
 
     try {
-      const response = await fetch(`https://api.anteaterfind.com/search?q=${encodeURIComponent(query)}`);
+      // Adjust API call to include offset and limit
+      const response = await fetch(`https://api.anteaterfind.com/search?q=${encodeURIComponent(query)}&offset=${isLoadMore ? currentOffset + resultsPerPage : 0}&limit=${resultsPerPage}`);
       const data = await response.json();
-      setResults(data.results || []);
-      setQueryTime(data.query_time);
-      setTotalResults(data.total);
+      
+      if (isLoadMore) {
+        setResults(prevResults => [...prevResults, ...(data.results || [])]);
+        setCurrentOffset(prevOffset => prevOffset + resultsPerPage);
+      } else {
+        setResults(data.results || []);
+        setQueryTime(data.query_time);
+        setTotalResults(data.total);
+      }
     } catch (error) {
       console.error('Error searching:', error);
     }
 
-    setLoading(false);
-  };
+    if (isLoadMore) {
+      setLoadingMore(false);
+    } else {
+      setLoading(false);
+    }
+  }, [query, currentOffset]); // Added currentOffset to dependencies
   
   // console.log("App.js: Before return statement");
   return (
@@ -123,13 +145,24 @@ function App() {
               {/* Map through results array to display each result */}
               {results.map((result, index) => (
                 <SearchResult 
-                  key={index}
+                  key={`${result.doc_id}-${index}`}
                   result={result}
                   index={index}
                   isExpanded={!!expandedResults[index]}
                   onToggleExpand={() => toggleExpand(index)}
                 />
               ))}
+
+              {/* Load More Button */}
+              {results.length < totalResults && (
+                <Button 
+                  onClick={() => handleSearch(true)} 
+                  disabled={loadingMore} 
+                  sx={{ marginTop: 2 }}
+                >
+                  {loadingMore ? <CircularProgress size={24} /> : 'Load More'}
+                </Button>
+              )}
             </>
           )}
         </Box>

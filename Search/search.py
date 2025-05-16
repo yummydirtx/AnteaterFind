@@ -51,28 +51,33 @@ class Search:
         
         return matching_doc_ids
     
-    def get_formatted_results(self, query, jsonify, limit=5) -> Response:
+    def get_formatted_results(self, query, jsonify, offset=0, limit=5) -> Response: # Add offset and limit parameters
         """
         Get search results in a formatted manner for display.
         
         Args:
             query: The search query string
-            limit: Maximum number of results to display (default: 5)
+            offset: Starting index for results (for pagination)
+            limit: Maximum number of results to display
         """
         # Process query
         query_terms = self.query_processor.tokenize_query(query)
         start_time = time.time()
         results = self.search(query_terms)
         query_time = time.time() - start_time
-        results = self.ranking.rank_results(results, query_terms)
+        ranked_results = self.ranking.rank_results(results, query_terms) # Renamed to avoid confusion
+        
+        # Apply pagination using offset and limit
+        paginated_results = ranked_results[offset : offset + limit]
+        
         formatted_results = [ {
             "doc_id": doc_id,
             "url": url,
             "score": score,
             "tf_idf_info": tf_idf_info
-        } for doc_id, url, score, tf_idf_info in results[:limit]
+        } for doc_id, url, score, tf_idf_info in paginated_results
         ]
-        return jsonify({"results": formatted_results, "total": len(results), "query_time": query_time})
+        return jsonify({"results": formatted_results, "total": len(ranked_results), "query_time": query_time})
 
     def print_results(self, results, limit=10):
         """

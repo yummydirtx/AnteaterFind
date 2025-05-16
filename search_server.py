@@ -25,9 +25,11 @@ search_engine = Search(zip_path)
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('q', '')
+    offset = request.args.get('offset', 0, type=int) # Add offset parameter, default to 0
+    limit = request.args.get('limit', 5, type=int) # Add limit parameter, default to 5
     if not query:
         return jsonify({'error': 'No query provided'}), 400
-    return search_engine.get_formatted_results(query, jsonify)
+    return search_engine.get_formatted_results(query, jsonify, offset=offset, limit=limit) # Pass offset and limit
 
 @app.route('/summary', methods=['GET'])
 def summary():
