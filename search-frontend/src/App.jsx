@@ -12,6 +12,7 @@ import { SearchBar, ResultSummary, NoResults, SearchResult } from './components'
  * Handles state management and data fetching for the search functionality
  */
 function App() {
+  // console.log("App.js: App component function started");
   // State for search query and results
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -39,6 +40,7 @@ function App() {
    */
   const handleSearch = async () => {
     if (!query) {
+      // console.log("App.js: handleSearch - query is empty, returning");
       return;
     }
     setLoading(true);
@@ -59,6 +61,7 @@ function App() {
     setLoading(false);
   };
   
+  // console.log("App.js: Before return statement");
   return (
     <ThemeProvider theme={createTheme({ palette: { mode: 'dark' } })}>
       <CssBaseline />
@@ -80,10 +83,10 @@ function App() {
           from: { opacity: 0, transform: 'translateY(50px)' },
           to: { opacity: 1, transform: 'translateY(0)' }
         },
-      })
-      }>
+      })}
+      >
         {/* Search interface component */}
-        <SearchBar 
+        <SearchBar
           query={query} 
           setQuery={setQuery} 
           handleSearch={handleSearch} 

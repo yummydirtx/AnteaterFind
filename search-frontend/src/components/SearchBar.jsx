@@ -17,6 +17,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
  * @param {boolean} props.hasSearched - Whether a search has been performed
  */
 const SearchBar = ({ query, setQuery, handleSearch, hasSearched }) => {
+  // console.log("SearchBar.js: SearchBar component function started");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

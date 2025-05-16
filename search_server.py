@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 # Configure CORS more explicitly to handle both localhost and 127.0.0.1
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://34.172.71.18:5000", "http://anteaterfind.com"]}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://anteaterfind.com"]}})
 
 # Initialize search engine
 api_key = os.environ.get("OPENAI_API_KEY")
