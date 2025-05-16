@@ -42,7 +42,7 @@ def search():
         return jsonify({"error": "No query provided"}), 400
     try:
         results = search_engine.search(query)
-        print(f"Search results: {results}")  # Debugging line
+        app.logger.info(f"Search results: {results}")  # Debugging line
         serializable_results = convert_sets_to_lists(results)
         return jsonify(serializable_results), 200
     except Exception as e:
