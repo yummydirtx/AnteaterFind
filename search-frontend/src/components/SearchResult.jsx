@@ -7,6 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Chip from '@mui/material/Chip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import { keyframes } from '@mui/system';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 
@@ -19,6 +20,13 @@ import Alert from '@mui/material/Alert';
  * @param {boolean} props.isExpanded - Whether the result details are expanded
  * @param {Function} props.onToggleExpand - Function to toggle expanded state
  */
+
+// Define keyframes once using the keyframes utility for a unique animation name
+const slideInFrames = keyframes`
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
 const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -134,10 +142,6 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
               display: 'flex', 
               flexWrap: 'wrap', 
               gap: 1,
-              '@keyframes slideIn': {
-                from: { opacity: 0, transform: 'translateY(-10px)' },
-                to: { opacity: 1, transform: 'translateY(0)' }
-              }
             }}>
               {/* Sort terms by value and display as chips */}
               {Object.entries(result.tf_idf_info)
@@ -152,7 +156,7 @@ const SearchResult = ({ result, index, isExpanded, onToggleExpand }) => {
                       backgroundColor: `rgba(79, 195, 247, ${Math.min(value * 0.5, 0.8)})`,
                       '& .MuiChip-label': { fontSize: '0.7rem' },
                       // Staggered animation for chips
-                      animation: 'slideIn 0.4s ease',
+                      animation: `${slideInFrames} 0.4s ease`,
                       animationDelay: `${i * 0.05}s`,
                       animationFillMode: 'both',
                     }}
