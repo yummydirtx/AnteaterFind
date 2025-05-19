@@ -40,7 +40,7 @@ function Copyright() {
   return (
     <Typography variant="body2" color="text.secondary" mt={1}>
       {'Copyright © '}
-      Alex Frutkin&nbsp;
+      Alex Frutkin and Taravee Tichilasuntron&nbsp;
       {new Date().getFullYear()}
     </Typography>
   );
